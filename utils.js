@@ -10,11 +10,11 @@ const authenticateUser = async (req, res, next) => {
   const token = req.headers.authorization;
   try {
     const decodedPayload = jwt.verify(token, secret);
-    req.userId = decodedPayload._id;
+    req.userId = decodedPayload.userId;
     req.subscriptionSummary = decodedPayload.subscriptionSummary;
     return next();
-  } catch (err) {
-    console.log({ err });
+  } catch (error) {
+    console.error({ error });
     return res.status(401).json({
       success: false,
       message: "Authentication error",
@@ -25,14 +25,14 @@ const authenticateUser = async (req, res, next) => {
 const catchError = async (next, callback) => {
   try {
     await callback();
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
 
 const getSignedToken = (user) =>
   jwt.sign(
-    { _id: user._id, subscriptionSummary: user.subscriptionSummary },
+    { userId: user._id, subscriptionSummary: user.subscriptionSummary },
     secret
   );
 
@@ -53,3 +53,16 @@ const isDeepEqual = (obj1, obj2) =>
   });
 
 module.exports = { authenticateUser, catchError, getSignedToken, isDeepEqual };
+const renameObjectKey = (obj, oldKey, newKey) => {
+  obj[newKey] = obj[oldKey];
+  delete obj[oldKey];
+  return obj;
+};
+
+module.exports = {
+  authenticateUser,
+  catchError,
+  getSignedToken,
+  isDeepEqual,
+  renameObjectKey,
+};

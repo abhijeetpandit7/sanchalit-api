@@ -1,7 +1,12 @@
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
 const { User } = require("../models/user");
-const { catchError, getSignedToken, isDeepEqual } = require("../utils");
+const {
+  catchError,
+  getSignedToken,
+  isDeepEqual,
+  renameObjectKey,
+} = require("../utils");
 
 const connectGoogle = async (req, res, next) => {
   catchError(next, async () => {
@@ -23,13 +28,13 @@ const connectGoogle = async (req, res, next) => {
         fullName,
         profilePictureUrl,
       });
-      user = await user.save();
+      await user.save();
       return res.json({
         success: true,
-        user: _.pick(user, ["_id"]),
+        auth: renameObjectKey(_.pick(user, ["_id"]), "_id", "userId"),
       });
     }
-    return res.json({
+    return res.status(404).json({
       success: false,
       message: "User not found",
     });
@@ -41,6 +46,7 @@ const getUser = async (req, res, next) => {
     const user = await User.findById(req.userId);
     if (user) {
       let userInfo = _.pick(user, ["_id"]);
+      renameObjectKey(userInfo, "_id", "userId");
       const isTokenLegacy =
         isDeepEqual(req.subscriptionSummary, user.subscriptionSummary) ===
         false;
@@ -50,10 +56,10 @@ const getUser = async (req, res, next) => {
       }
       return res.json({
         success: true,
-        user: userInfo,
+        auth: userInfo,
       });
     }
-    return res.json({
+    return res.status(404).json({
       success: false,
       message: "User not found",
     });
@@ -69,10 +75,10 @@ const getUserId = async (req, res, next) => {
     if (user) {
       return res.json({
         success: true,
-        user: _.pick(user, ["_id"]),
+        auth: renameObjectKey(_.pick(user, ["_id"]), "_id", "userId"),
       });
     }
-    return res.json({
+    return res.status(404).json({
       success: false,
       message: "User not found",
     });
@@ -82,13 +88,14 @@ const getUserId = async (req, res, next) => {
 const signUpUser = async (req, res, next) => {
   catchError(next, async () => {
     let user = new User();
-    user = await user.save();
+    await user.save();
     const token = getSignedToken(user);
-    let userInfo = _.pick(user, ["_id"]);
+    let userInfo = _.pick(user, ["_id", "subscriptionSummary"]);
+    renameObjectKey(userInfo, "_id", "userId");
     userInfo = _.extend(userInfo, { token });
-    return res.json({
+    return res.status(201).json({
       success: true,
-      user: userInfo,
+      auth: userInfo,
     });
   });
 };
@@ -110,13 +117,14 @@ const signUpUserWithGoogle = async (req, res, next) => {
       fullName,
       profilePictureUrl,
     });
-    user = await user.save();
+    await user.save();
     const token = getSignedToken(user);
     let userInfo = _.pick(user, ["_id"]);
+    renameObjectKey(userInfo, "_id", "userId");
     userInfo = _.extend(userInfo, { token });
-    return res.json({
+    return res.status(201).json({
       success: true,
-      user: userInfo,
+      auth: userInfo,
     });
   });
 };

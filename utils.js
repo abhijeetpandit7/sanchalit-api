@@ -6,6 +6,22 @@ dotenv.config();
 
 const secret = process.env.SECRET;
 
+const addOrMergeArrayElements = (array, elements, identifier) => {
+  if (array.length === 0) return elements;
+
+  const elementMap = array.reduce((map, element) => {
+    map.set(element[identifier], element);
+    return map;
+  }, new Map());
+  elements.forEach((element) => {
+    elementMap.set(element[identifier], {
+      ...elementMap.get(element[identifier]),
+      ...element,
+    });
+  });
+  return Array.from(elementMap.values());
+};
+
 const authenticateUser = async (req, res, next) => {
   const token = req.headers.authorization;
   try {
@@ -30,6 +46,16 @@ const catchError = async (next, callback) => {
   }
 };
 
+const filterObjectBySchema = (obj, schema) => {
+  const filteredData = _.pick(obj, Object.keys(schema));
+  return _.mapValues(filteredData, (value, key) => {
+    if (_.isObject(value) && _.isObject(schema[key])) {
+      return filterObjectBySchema(value, schema[key]);
+    }
+    return value;
+  });
+};
+
 const getSignedToken = (user) =>
   jwt.sign(
     { userId: user._id, subscriptionSummary: user.subscriptionSummary },
@@ -52,7 +78,9 @@ const isDeepEqual = (obj1, obj2) =>
     }
   });
 
-module.exports = { authenticateUser, catchError, getSignedToken, isDeepEqual };
+const omitDocumentProperties = (obj) =>
+  _.omit(obj.toObject(), ["_id", "__v", "createdAt", "updatedAt"]);
+
 const renameObjectKey = (obj, oldKey, newKey) => {
   obj[newKey] = obj[oldKey];
   delete obj[oldKey];
@@ -60,9 +88,12 @@ const renameObjectKey = (obj, oldKey, newKey) => {
 };
 
 module.exports = {
+  addOrMergeArrayElements,
   authenticateUser,
   catchError,
+  filterObjectBySchema,
   getSignedToken,
   isDeepEqual,
+  omitDocumentProperties,
   renameObjectKey,
 };

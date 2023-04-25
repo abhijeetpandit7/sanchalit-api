@@ -15,10 +15,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 const userRouter = require("./router/user");
+const userDataRouter = require("./router/userData");
 
 db.connectDB();
 
 app.use("/user", userRouter);
+app.use("/userData", userDataRouter);
 
 app.get("/", (req, res) => {
   res.json({

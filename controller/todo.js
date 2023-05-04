@@ -44,6 +44,53 @@ const addTodo = async (req, res, next, sendResponse = true) => {
   });
 };
 
+const mergeTodo = async (next, sourceUserId, destinationUserId) => {
+  catchError(next, async () => {
+    let todoOfSourceUser = await Todo.findById(sourceUserId);
+    if (!todoOfSourceUser) {
+      return {
+        success: true,
+        message: "No document to merge",
+      };
+    } else if (todoOfSourceUser.itemList.length === 0) {
+      await Todo.findByIdAndDelete(sourceUserId);
+      return {
+        success: true,
+        message: "No itemList to merge",
+      };
+    }
+
+    let todoOfDestinationUser = await Todo.findById(destinationUserId);
+    if (!todoOfDestinationUser) {
+      newUserTodo = new Todo({
+        _id: destinationUserId,
+        itemList: [...todoOfSourceUser.itemList],
+      });
+      await newUserTodo.save();
+      await Todo.findByIdAndDelete(sourceUserId);
+
+      return {
+        success: true,
+      };
+    }
+
+    todoOfDestinationUser = _.extend(todoOfDestinationUser, {
+      itemList: addOrMergeArrayElements(
+        todoOfDestinationUser.itemList,
+        todoOfSourceUser.itemList,
+        "_id"
+      ),
+    });
+    await todoOfDestinationUser.save();
+    await Todo.findByIdAndDelete(sourceUserId);
+
+    return {
+      success: true,
+    };
+  });
+};
+
 module.exports = {
   addTodo,
+  mergeTodo,
 };

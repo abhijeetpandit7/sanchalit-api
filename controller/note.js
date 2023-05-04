@@ -44,6 +44,53 @@ const addNote = async (req, res, next, sendResponse = true) => {
   });
 };
 
+const mergeNote = async (next, sourceUserId, destinationUserId) => {
+  catchError(next, async () => {
+    let noteOfSourceUser = await Note.findById(sourceUserId);
+    if (!noteOfSourceUser) {
+      return {
+        success: true,
+        message: "No document to merge",
+      };
+    } else if (noteOfSourceUser.itemList.length === 0) {
+      await Note.findByIdAndDelete(sourceUserId);
+      return {
+        success: true,
+        message: "No itemList to merge",
+      };
+    }
+
+    let noteOfDestinationUser = await Note.findById(destinationUserId);
+    if (!noteOfDestinationUser) {
+      newUserNote = new Note({
+        _id: destinationUserId,
+        itemList: [...noteOfSourceUser.itemList],
+      });
+      await newUserNote.save();
+      await Note.findByIdAndDelete(sourceUserId);
+
+      return {
+        success: true,
+      };
+    }
+
+    noteOfDestinationUser = _.extend(noteOfDestinationUser, {
+      itemList: addOrMergeArrayElements(
+        noteOfDestinationUser.itemList,
+        noteOfSourceUser.itemList,
+        "_id"
+      ),
+    });
+    await noteOfDestinationUser.save();
+    await Note.findByIdAndDelete(sourceUserId);
+
+    return {
+      success: true,
+    };
+  });
+};
+
 module.exports = {
   addNote,
+  mergeNote,
 };

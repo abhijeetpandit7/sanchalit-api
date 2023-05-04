@@ -1,3 +1,4 @@
+const jwt = require("jsonwebtoken");
 const _ = require("lodash");
 const { Countdown } = require("../models/countdown");
 const { Customization } = require("../models/customization");
@@ -6,10 +7,10 @@ const { Todo } = require("../models/todo");
 const { TodoList } = require("../models/todoList");
 const { User } = require("../models/user");
 const { updateCustomization } = require("./customization");
-const { addCountdown } = require("./countdown");
-const { addNote } = require("./note");
-const { addTodo } = require("./todo");
-const { addTodoList } = require("./todoList");
+const { addCountdown, mergeCountdown } = require("./countdown");
+const { addNote, mergeNote } = require("./note");
+const { addTodo, mergeTodo } = require("./todo");
+const { addTodoList, mergeTodoList } = require("./todoList");
 const {
   catchError,
   getSignedToken,
@@ -21,10 +22,16 @@ const {
 const getUserSettings = async (req, res, next) => {
   catchError(next, async () => {
     const { userId } = req;
+    const isProfileDetailsRequested = req.query.profileDetails === "1";
     const user = await User.findById(userId);
     if (user) {
       let userInfo = _.pick(user, ["_id", "email", "subscriptionSummary"]);
       renameObjectKey(userInfo, "_id", "userId");
+      if (isProfileDetailsRequested)
+        userInfo = _.extend(
+          userInfo,
+          _.pick(user, ["fullName", "profilePictureUrl"])
+        );
 
       const isTokenLegacy =
         isDeepEqual(req.subscriptionSummary, user.subscriptionSummary) ===
@@ -78,6 +85,73 @@ const getUserSettings = async (req, res, next) => {
   });
 };
 
+const mergeUserDataWithGoogle = async (req, res, next) => {
+  catchError(next, async () => {
+    const {
+      userId,
+      body: { googleCredential },
+    } = req;
+    const decodedPayload = jwt.decode(googleCredential);
+    const { sub: oauthId } = decodedPayload;
+    const userWithoutOauth = await User.findById(userId);
+    if (userWithoutOauth) {
+      if (!!userWithoutOauth.oauthId) {
+        return res.status(409).json({
+          success: false,
+          message: "User has an oauthId",
+        });
+      }
+      const userWithOauth = await User.findOne({ oauthId });
+      if (userWithOauth) {
+        let mergeCountdownResponse,
+          mergeNoteResponse,
+          mergeTodoResponse,
+          mergeTodoListResponse;
+
+        mergeCountdownResponse = await mergeCountdown(
+          next,
+          userWithoutOauth,
+          userWithOauth
+        );
+        mergeNoteResponse = await mergeNote(
+          next,
+          userWithoutOauth,
+          userWithOauth
+        );
+        mergeTodoResponse = await mergeTodo(
+          next,
+          userWithoutOauth,
+          userWithOauth
+        );
+        mergeTodoListResponse = await mergeTodoList(
+          next,
+          userWithoutOauth,
+          userWithOauth
+        );
+        await Customization.findByIdAndDelete(userWithoutOauth);
+        await User.findByIdAndDelete(userWithoutOauth);
+
+        const token = getSignedToken(userWithOauth);
+        let userInfo = _.pick(userWithOauth, ["_id"]);
+        renameObjectKey(userInfo, "_id", "userId");
+        userInfo = _.extend(userInfo, { token });
+        return res.json({
+          success: true,
+          auth: userInfo,
+        });
+      }
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    return res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
+  });
+};
+
 const updateUserData = async (req, res, next) => {
   catchError(next, async () => {
     const { countdowns, notes, todos, todoLists } = req.body.data;
@@ -105,5 +179,6 @@ const updateUserData = async (req, res, next) => {
 
 module.exports = {
   getUserSettings,
+  mergeUserDataWithGoogle,
   updateUserData,
 };

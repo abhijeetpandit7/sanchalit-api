@@ -48,6 +48,55 @@ const addCountdown = async (req, res, next, sendResponse = true) => {
   });
 };
 
+const mergeCountdown = async (next, sourceUserId, destinationUserId) => {
+  catchError(next, async () => {
+    let countdownOfSourceUser = await Countdown.findById(sourceUserId);
+    if (!countdownOfSourceUser) {
+      return {
+        success: true,
+        message: "No document to merge",
+      };
+    } else if (countdownOfSourceUser.itemList.length === 0) {
+      await Countdown.findByIdAndDelete(sourceUserId);
+      return {
+        success: true,
+        message: "No itemList to merge",
+      };
+    }
+
+    let countdownOfDestinationUser = await Countdown.findById(
+      destinationUserId
+    );
+    if (!countdownOfDestinationUser) {
+      newUserCountdown = new Countdown({
+        _id: destinationUserId,
+        itemList: [...countdownOfSourceUser.itemList],
+      });
+      await newUserCountdown.save();
+      await Countdown.findByIdAndDelete(sourceUserId);
+
+      return {
+        success: true,
+      };
+    }
+
+    countdownOfDestinationUser = _.extend(countdownOfDestinationUser, {
+      itemList: addOrMergeArrayElements(
+        countdownOfDestinationUser.itemList,
+        countdownOfSourceUser.itemList,
+        "_id"
+      ),
+    });
+    await countdownOfDestinationUser.save();
+    await Countdown.findByIdAndDelete(sourceUserId);
+
+    return {
+      success: true,
+    };
+  });
+};
+
 module.exports = {
   addCountdown,
+  mergeCountdown,
 };

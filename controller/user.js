@@ -45,7 +45,13 @@ const getUser = async (req, res, next) => {
   catchError(next, async () => {
     const user = await User.findById(req.userId);
     if (user) {
-      let userInfo = _.pick(user, ["_id"]);
+      let userInfo = _.pick(user, [
+        "_id",
+        "email",
+        "fullName",
+        "profilePictureUrl",
+        "subscriptionSummary",
+      ]);
       renameObjectKey(userInfo, "_id", "userId");
       const isTokenLegacy =
         isDeepEqual(req.subscriptionSummary, user.subscriptionSummary) ===
@@ -68,7 +74,7 @@ const getUser = async (req, res, next) => {
 
 const getUserId = async (req, res, next) => {
   catchError(next, async () => {
-    const { googleCredential } = req.body;
+    const googleCredential = req.headers.google_credential;
     const decodedPayload = jwt.decode(googleCredential);
     const { sub: oauthId } = decodedPayload;
     const user = await User.findOne({ oauthId });
@@ -76,6 +82,29 @@ const getUserId = async (req, res, next) => {
       return res.json({
         success: true,
         auth: renameObjectKey(_.pick(user, ["_id"]), "_id", "userId"),
+      });
+    }
+    return res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
+  });
+};
+
+const loginUserWithGoogle = async (req, res, next) => {
+  catchError(next, async () => {
+    const { googleCredential } = req.body;
+    const decodedPayload = jwt.decode(googleCredential);
+    const { sub: oauthId } = decodedPayload;
+    const user = await User.findOne({ oauthId });
+    if (user) {
+      const token = getSignedToken(user);
+      let userInfo = _.pick(user, ["_id"]);
+      renameObjectKey(userInfo, "_id", "userId");
+      userInfo = _.extend(userInfo, { token });
+      return res.json({
+        success: true,
+        auth: userInfo,
       });
     }
     return res.status(404).json({
@@ -133,6 +162,7 @@ module.exports = {
   connectGoogle,
   getUser,
   getUserId,
+  loginUserWithGoogle,
   signUpUser,
   signUpUserWithGoogle,
 };

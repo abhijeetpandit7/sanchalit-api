@@ -29,9 +29,13 @@ const connectGoogle = async (req, res, next) => {
         profilePictureUrl,
       });
       await user.save();
+      let userInfo = _.pick(user, ["_id"]);
+      renameObjectKey(userInfo, "_id", "userId");
+      const token = getSignedToken(user);
+      userInfo = _.extend(userInfo, { token });
       return res.json({
         success: true,
-        auth: renameObjectKey(_.pick(user, ["_id"]), "_id", "userId"),
+        auth: userInfo,
       });
     }
     return res.status(404).json({

@@ -6,20 +6,37 @@ dotenv.config();
 
 const secret = process.env.SECRET;
 
-const addOrMergeArrayElements = (array, elements, identifier) => {
-  if (array.length === 0) return elements;
+const addOrMergeArrayElements = (array, newElements, identifier) => {
+  if (array.length === 0) return newElements;
 
   const elementMap = array.reduce((map, element) => {
     map.set(element[identifier], element);
     return map;
   }, new Map());
-  elements.forEach((element) => {
+  newElements.forEach((element) => {
     elementMap.set(element[identifier], {
       ...elementMap.get(element[identifier]),
       ...element,
     });
   });
   return Array.from(elementMap.values());
+};
+
+const addOrMergeObjectProperties = (object, newProperties) => {
+  const mergedObject = { ...object };
+
+  for (const [key, newValue] of Object.entries(newProperties)) {
+    const oldValue = object[key];
+    if (_.isArray(oldValue) && _.isArray(newValue)) {
+      mergedObject[key] = addOrMergeArrayElements(oldValue, newValue, "id");
+    } else if (_.isObject(oldValue) && _.isObject(newValue)) {
+      mergedObject[key] = addOrMergeObjectProperties(oldValue, newValue);
+    } else {
+      mergedObject[key] = newValue;
+    }
+  }
+
+  return mergedObject;
 };
 
 const authenticateUser = async (req, res, next) => {
@@ -89,6 +106,7 @@ const renameObjectKey = (obj, oldKey, newKey) => {
 
 module.exports = {
   addOrMergeArrayElements,
+  addOrMergeObjectProperties,
   authenticateUser,
   catchError,
   filterObjectBySchema,

@@ -70,12 +70,18 @@ const getUserSettings = async (req, res, next) => {
           customizationInfo = _.extend(customizationInfo, {
             todoLists: todoLists.itemList,
           });
+
+        return res.json({
+          success: true,
+          auth: userInfo,
+          customization: customizationInfo,
+        });
       }
 
       return res.status(206).json({
         success: true,
         auth: userInfo,
-        customization: customizationInfo,
+        message: "Customization not found",
       });
     }
     return res.status(404).json({

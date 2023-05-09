@@ -16,11 +16,13 @@ app.use(cors());
 
 const userRouter = require("./router/user");
 const userDataRouter = require("./router/userData");
+const customizationRouter = require("./router/customization");
 
 db.connectDB();
 
 app.use("/user", userRouter);
 app.use("/userData", userDataRouter);
+app.use("/customization", customizationRouter);
 
 app.get("/", (req, res) => {
   res.json({

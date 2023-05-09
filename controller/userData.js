@@ -72,7 +72,7 @@ const getUserSettings = async (req, res, next) => {
           });
       }
 
-      return res.json({
+      return res.status(206).json({
         success: true,
         auth: userInfo,
         customization: customizationInfo,
@@ -135,7 +135,7 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
         let userInfo = _.pick(userWithOauth, ["_id"]);
         renameObjectKey(userInfo, "_id", "userId");
         userInfo = _.extend(userInfo, { token });
-        return res.json({
+        return res.status(202).json({
           success: true,
           auth: userInfo,
         });
@@ -173,7 +173,7 @@ const updateUserData = async (req, res, next) => {
     if (todoLists?.length)
       todoListResponse = await addTodoList(req, res, next, false);
 
-    return res.json({ success: true });
+    return res.status(202).json({ success: true });
   });
 };
 

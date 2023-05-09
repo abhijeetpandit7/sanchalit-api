@@ -95,7 +95,7 @@ const getUserId = async (req, res, next) => {
   });
 };
 
-const loginUserWithGoogle = async (req, res, next) => {
+const logInUserWithGoogle = async (req, res, next) => {
   catchError(next, async () => {
     const { googleCredential } = req.body;
     const decodedPayload = jwt.decode(googleCredential);
@@ -166,7 +166,7 @@ module.exports = {
   connectGoogle,
   getUser,
   getUserId,
-  loginUserWithGoogle,
+  logInUserWithGoogle,
   signUpUser,
   signUpUserWithGoogle,
 };

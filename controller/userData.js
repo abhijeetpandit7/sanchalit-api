@@ -53,22 +53,30 @@ const getUserSettings = async (req, res, next) => {
           Todo.findById(userId),
           TodoList.findById(userId),
         ]);
-        // TODO: renameObjectKey("_id", "id");
+
         if (countdowns)
           customizationInfo = _.extend(customizationInfo, {
-            countdowns: countdowns.itemList,
+            countdowns: countdowns
+              .toObject()
+              .itemList.map((item) => renameObjectKey(item, "_id", "id")),
           });
         if (notes)
           customizationInfo = _.extend(customizationInfo, {
-            notes: notes.itemList,
+            notes: notes
+              .toObject()
+              .itemList.map((item) => renameObjectKey(item, "_id", "id")),
           });
         if (todos)
           customizationInfo = _.extend(customizationInfo, {
-            todos: todos.itemList,
+            todos: todos
+              .toObject()
+              .itemList.map((item) => renameObjectKey(item, "_id", "id")),
           });
         if (todoLists)
           customizationInfo = _.extend(customizationInfo, {
-            todoLists: todoLists.itemList,
+            todoLists: todoLists
+              .toObject()
+              .itemList.map((item) => renameObjectKey(item, "_id", "id")),
           });
 
         return res.json({

@@ -7,10 +7,10 @@ const { Todo } = require("../models/todo");
 const { TodoList } = require("../models/todoList");
 const { User } = require("../models/user");
 const { updateCustomization } = require("./customization");
-const { addCountdown, mergeCountdown } = require("./countdown");
-const { addNote, mergeNote } = require("./note");
-const { addTodo, mergeTodo } = require("./todo");
-const { addTodoList, mergeTodoList } = require("./todoList");
+const { mergeCountdown, updateCountdown } = require("./countdown");
+const { mergeNote, updateNote } = require("./note");
+const { mergeTodo, updateTodo } = require("./todo");
+const { mergeTodoList, updateTodoList } = require("./todoList");
 const {
   catchError,
   getSignedToken,
@@ -178,14 +178,14 @@ const updateUserData = async (req, res, next) => {
     );
 
     if (countdowns?.length)
-      countdownResponse = await addCountdown(req, res, next, false);
+      countdownResponse = await updateCountdown(req, res, next, false);
 
-    if (notes?.length) noteResponse = await addNote(req, res, next, false);
+    if (notes?.length) noteResponse = await updateNote(req, res, next, false);
 
-    if (todos?.length) todoResponse = await addTodo(req, res, next, false);
+    if (todos?.length) todoResponse = await updateTodo(req, res, next, false);
 
     if (todoLists?.length)
-      todoListResponse = await addTodoList(req, res, next, false);
+      todoListResponse = await updateTodoList(req, res, next, false);
 
     return res.status(202).json({ success: true });
   });

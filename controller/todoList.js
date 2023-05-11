@@ -9,6 +9,25 @@ const {
 
 const DEFAULT_TODO_LIST_IDS = ["inbox", "today", "done"];
 
+const deleteTodoList = async (req, res, next) => {
+  catchError(next, async () => {
+    const { userId } = req;
+    const { id } = req.params;
+
+    if (req.body?.todoSettings) {
+      await updateCustomization(req, res, next, false);
+    }
+
+    let todoList = await TodoList.findById(userId);
+    todoList = _.extend(todoList, {
+      itemList: todoList.itemList.filter((item) => item._id.toString() !== id),
+    });
+    await todoList.save();
+
+    return res.json({ success: true });
+  });
+};
+
 const mergeTodoList = async (next, sourceUserId, destinationUserId) => {
   catchError(next, async () => {
     let todoListOfSourceUser = await TodoList.findById(sourceUserId);
@@ -100,6 +119,7 @@ const updateTodoList = async (req, res, next, sendResponse = true) => {
 };
 
 module.exports = {
+  deleteTodoList,
   mergeTodoList,
   updateTodoList,
 };

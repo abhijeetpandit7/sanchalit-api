@@ -11,7 +11,7 @@ const updateCustomization = async (req, res, next, sendResponse = true) => {
     const { userId } = req;
     const { data } = req.body;
     const customizationData = filterObjectBySchema(
-      data,
+      data ?? req.body,
       Customization.schema.obj
     );
     if (_.isEmpty(customizationData)) {

@@ -17,12 +17,14 @@ app.use(cors());
 const userRouter = require("./router/user");
 const userDataRouter = require("./router/userData");
 const customizationRouter = require("./router/customization");
+const todoListRouter = require("./router/todoList");
 
 db.connectDB();
 
 app.use("/user", userRouter);
 app.use("/userData", userDataRouter);
 app.use("/customization", customizationRouter);
+app.use("/todoList", todoListRouter);
 
 app.get("/", (req, res) => {
   res.json({

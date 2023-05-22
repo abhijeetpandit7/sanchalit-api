@@ -2,9 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { authenticateUser } = require("../utils");
 
-const { deleteTodoList, updateTodoList } = require("../controller/todoList");
-
-router.route("/").post(authenticateUser, updateTodoList);
+const { deleteTodoList } = require("../controller/todoList");
 
 router.route("/:id").delete(authenticateUser, deleteTodoList);
 

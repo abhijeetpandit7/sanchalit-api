@@ -2,9 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { authenticateUser } = require("../utils");
 
-const { deleteCountdown, updateCountdown } = require("../controller/countdown");
-
-router.route("/").post(authenticateUser, updateCountdown);
+const { deleteCountdown } = require("../controller/countdown");
 
 router.route("/:id").delete(authenticateUser, deleteCountdown);
 

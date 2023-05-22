@@ -6,6 +6,30 @@ const {
   renameObjectKey,
 } = require("../utils");
 
+const deleteNote = async (req, res, next) => {
+  catchError(next, async () => {
+    const { userId } = req;
+    const { id } = req.params;
+    let ids = [];
+
+    if (req.body?.notes) {
+      ids = req.body.notes.map((note) => note.id);
+    }
+
+    let note = await Note.findById(userId);
+    note = _.extend(note, {
+      itemList: note.itemList.filter((item) =>
+        id
+          ? item._id.toString() !== id
+          : ids.includes(item._id.toString()) === false
+      ),
+    });
+    await note.save();
+
+    return res.json({ success: true });
+  });
+};
+
 const mergeNote = async (next, sourceUserId, destinationUserId) => {
   catchError(next, async () => {
     let noteOfSourceUser = await Note.findById(sourceUserId);
@@ -91,6 +115,7 @@ const updateNote = async (req, res, next, sendResponse = true) => {
 };
 
 module.exports = {
+  deleteNote,
   mergeNote,
   updateNote,
 };

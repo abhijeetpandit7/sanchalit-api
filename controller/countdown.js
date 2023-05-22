@@ -6,6 +6,21 @@ const {
   renameObjectKey,
 } = require("../utils");
 
+const deleteCountdown = async (req, res, next) => {
+  catchError(next, async () => {
+    const { userId } = req;
+    const { id } = req.params;
+
+    let countdown = await Countdown.findById(userId);
+    countdown = _.extend(countdown, {
+      itemList: countdown.itemList.filter((item) => item._id.toString() !== id),
+    });
+    await countdown.save();
+
+    return res.json({ success: true });
+  });
+};
+
 const mergeCountdown = async (next, sourceUserId, destinationUserId) => {
   catchError(next, async () => {
     let countdownOfSourceUser = await Countdown.findById(sourceUserId);
@@ -97,6 +112,7 @@ const updateCountdown = async (req, res, next, sendResponse = true) => {
 };
 
 module.exports = {
+  deleteCountdown,
   mergeCountdown,
   updateCountdown,
 };

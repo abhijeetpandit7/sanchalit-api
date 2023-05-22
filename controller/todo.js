@@ -7,6 +7,25 @@ const {
   renameObjectKey,
 } = require("../utils");
 
+const deleteTodo = async (req, res, next) => {
+  catchError(next, async () => {
+    const { userId } = req;
+    const { id } = req.params;
+
+    if (req.body?.todoSettings) {
+      await updateCustomization(req, res, next, false);
+    }
+
+    let todo = await Todo.findById(userId);
+    todo = _.extend(todo, {
+      itemList: todo.itemList.filter((item) => item._id.toString() !== id),
+    });
+    await todo.save();
+
+    return res.json({ success: true });
+  });
+};
+
 const mergeTodo = async (next, sourceUserId, destinationUserId) => {
   catchError(next, async () => {
     let todoOfSourceUser = await Todo.findById(sourceUserId);
@@ -96,6 +115,7 @@ const updateTodo = async (req, res, next, sendResponse = true) => {
 };
 
 module.exports = {
+  deleteTodo,
   mergeTodo,
   updateTodo,
 };

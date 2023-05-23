@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
+const { Customization } = require("../models/customization");
 const { User } = require("../models/user");
 const {
   catchError,
@@ -16,6 +17,7 @@ const connectGoogle = async (req, res, next) => {
       sub: oauthId,
       email,
       name: fullName,
+      given_name: displayName,
       picture: profilePictureUrl,
     } = decodedPayload;
 
@@ -33,6 +35,10 @@ const connectGoogle = async (req, res, next) => {
       renameObjectKey(userInfo, "_id", "userId");
       const token = getSignedToken(user);
       userInfo = _.extend(userInfo, { token });
+      const customization = await Customization.findById(req.userId);
+      if (customization && !!customization.displayName === false)
+        customization.displayName = displayName;
+      await customization.save();
       return res.json({
         success: true,
         auth: userInfo,

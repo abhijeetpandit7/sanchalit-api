@@ -11,6 +11,11 @@ const deleteTodo = async (req, res, next) => {
   catchError(next, async () => {
     const { userId } = req;
     const { id } = req.params;
+    let ids = [];
+
+    if (req.body?.todos) {
+      ids = req.body.todos.map((todo) => todo.id);
+    }
 
     if (req.body?.todoSettings) {
       await updateCustomization(req, res, next, false);
@@ -18,7 +23,11 @@ const deleteTodo = async (req, res, next) => {
 
     let todo = await Todo.findById(userId);
     todo = _.extend(todo, {
-      itemList: todo.itemList.filter((item) => item._id.toString() !== id),
+      itemList: todo.itemList.filter((item) =>
+        id
+          ? item._id.toString() !== id
+          : ids.includes(item._id.toString()) === false
+      ),
     });
     await todo.save();
 

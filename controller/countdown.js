@@ -10,10 +10,19 @@ const deleteCountdown = async (req, res, next) => {
   catchError(next, async () => {
     const { userId } = req;
     const { id } = req.params;
+    let ids = [];
+
+    if (req.body?.countdowns) {
+      ids = req.body.countdowns.map((countdown) => countdown.id);
+    }
 
     let countdown = await Countdown.findById(userId);
     countdown = _.extend(countdown, {
-      itemList: countdown.itemList.filter((item) => item._id.toString() !== id),
+      itemList: countdown.itemList.filter((item) =>
+        id
+          ? item._id.toString() !== id
+          : ids.includes(item._id.toString()) === false
+      ),
     });
     await countdown.save();
 

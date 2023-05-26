@@ -13,6 +13,11 @@ const deleteTodoList = async (req, res, next) => {
   catchError(next, async () => {
     const { userId } = req;
     const { id } = req.params;
+    let ids = [];
+
+    if (req.body?.todoLists) {
+      ids = req.body.todoLists.map((todoList) => todoList.id);
+    }
 
     if (req.body?.todoSettings) {
       await updateCustomization(req, res, next, false);
@@ -20,7 +25,11 @@ const deleteTodoList = async (req, res, next) => {
 
     let todoList = await TodoList.findById(userId);
     todoList = _.extend(todoList, {
-      itemList: todoList.itemList.filter((item) => item._id.toString() !== id),
+      itemList: todoList.itemList.filter((item) =>
+        id
+          ? item._id.toString() !== id
+          : ids.includes(item._id.toString()) === false
+      ),
     });
     await todoList.save();
 

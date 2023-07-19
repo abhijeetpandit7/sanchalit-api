@@ -31,6 +31,7 @@ const userSchema = mongoose.Schema(
       },
       plan: {
         type: mongoose.Schema.Types.ObjectId,
+        ref: "SubscriptionPlan",
         default: null,
       },
     },

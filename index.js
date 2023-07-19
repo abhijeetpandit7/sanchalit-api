@@ -20,6 +20,7 @@ const countdownRouter = require("./router/countdown");
 const noteRouter = require("./router/note");
 const todoRouter = require("./router/todo");
 const todoListRouter = require("./router/todoList");
+const subscriptionPlanRouter = require("./router/subscriptionPlan");
 
 db.connectDB();
 
@@ -29,6 +30,7 @@ app.use("/countdown", countdownRouter);
 app.use("/note", noteRouter);
 app.use("/todo", todoRouter);
 app.use("/todoList", todoListRouter);
+app.use("/subscriptionPlan", subscriptionPlanRouter);
 
 app.get("/", (req, res) => {
   res.json({

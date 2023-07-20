@@ -1,3 +1,5 @@
+const { Buffer } = require("buffer");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const _ = require("lodash");
@@ -104,6 +106,21 @@ const renameObjectKey = (obj, oldKey, newKey) => {
   return obj;
 };
 
+const validateSignature = (req, res, next) => {
+  const hmac = crypto.createHmac("sha256", process.env.LEMONSQUEEZY_SECRET);
+  const digest = Buffer.from(hmac.update(req.body).digest("hex"), "utf8");
+  const signature = Buffer.from(req.get("X-Signature") || "", "utf8");
+
+  if (crypto.timingSafeEqual(digest, signature)) {
+    req.body = JSON.parse(req.body);
+    return next();
+  }
+  res.status(401).json({
+    success: false,
+    message: "Invalid signature",
+  });
+};
+
 module.exports = {
   addOrMergeArrayElements,
   addOrMergeObjectProperties,
@@ -114,4 +131,5 @@ module.exports = {
   isDeepEqual,
   omitDocumentProperties,
   renameObjectKey,
+  validateSignature,
 };

@@ -10,7 +10,11 @@ const PORT = process.env.PORT || 5000;
 dotenv.config();
 
 const app = express();
-app.use(bodyParser.json());
+app.use((req, res, next) => {
+  if (req.path.includes("webhook"))
+    express.raw({ type: "application/json" })(req, res, next);
+  else bodyParser.json()(req, res, next);
+});
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
@@ -20,6 +24,7 @@ const countdownRouter = require("./router/countdown");
 const noteRouter = require("./router/note");
 const todoRouter = require("./router/todo");
 const todoListRouter = require("./router/todoList");
+const subscriptionRouter = require("./router/subscription");
 const subscriptionPlanRouter = require("./router/subscriptionPlan");
 
 db.connectDB();
@@ -30,6 +35,7 @@ app.use("/countdown", countdownRouter);
 app.use("/note", noteRouter);
 app.use("/todo", todoRouter);
 app.use("/todoList", todoListRouter);
+app.use("/subscription", subscriptionRouter);
 app.use("/subscriptionPlan", subscriptionPlanRouter);
 
 app.get("/", (req, res) => {

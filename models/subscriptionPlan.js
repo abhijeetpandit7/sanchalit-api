@@ -19,10 +19,6 @@ const subscriptionPlanSchema = mongoose.Schema(
       required: "Interval is required",
       enum: ["month", "year"],
     },
-    durationInDays: {
-      type: Number,
-      required: "Duration in days is required",
-    },
     priceInCents: {
       type: Number,
       required: "Price in cents is required",

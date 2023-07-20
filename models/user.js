@@ -34,6 +34,11 @@ const userSchema = mongoose.Schema(
         ref: "SubscriptionPlan",
         default: null,
       },
+      status: {
+        type: String,
+        default: null,
+        enum: ["active", "cancelled", "expired", "trial"],
+      },
     },
   },
   {

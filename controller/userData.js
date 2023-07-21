@@ -34,8 +34,10 @@ const getUserSettings = async (req, res, next) => {
         );
 
       const isTokenLegacy =
-        isDeepEqual(req.subscriptionSummary, user.subscriptionSummary) ===
-        false;
+        isDeepEqual(
+          JSON.parse(JSON.stringify(req.subscriptionSummary)),
+          JSON.parse(JSON.stringify(user.subscriptionSummary))
+        ) === false;
       if (isTokenLegacy) {
         const token = getSignedToken(user);
         userInfo = _.extend(userInfo, { token });

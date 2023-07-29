@@ -1,44 +1,36 @@
 const mongoose = require("mongoose");
 
-const subscriptionSchema = mongoose.Schema(
-  {
-    startDate: {
-      type: Date,
-      default: null,
-    },
-    endDate: {
-      type: Date,
-      default: null,
-    },
-    plan: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "SubscriptionPlan",
-      required: true,
-    },
-    amount: {
-      type: Number,
-      required: true,
-    },
-    discountCode: {
-      type: String,
-    },
-    subscriptionId: {
-      type: Number,
-    },
-    orderId: {
-      type: Number,
-    },
-    productId: {
-      type: Number,
-    },
-    productName: {
-      type: String,
-    },
+const subscriptionSchema = mongoose.Schema({
+  _id: {
+    type: Number,
+    required: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  startDate: {
+    type: Date,
+    default: null,
+  },
+  endDate: {
+    type: Date,
+    default: null,
+  },
+  plan: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "SubscriptionPlan",
+    required: true,
+  },
+  discountCode: {
+    type: String,
+  },
+  orderId: {
+    type: Number,
+  },
+  productId: {
+    type: Number,
+  },
+  productName: {
+    type: String,
+  },
+});
 
 const userSubscriptionSchema = mongoose.Schema(
   {
@@ -57,7 +49,14 @@ const userSubscriptionSchema = mongoose.Schema(
     status: {
       type: String,
       default: null,
-      enum: ["active", "cancelled", "expired", "trial"],
+      enum: [
+        "active",
+        "cancelled",
+        "expired",
+        "past_due",
+        "unpaid",
+        "on_trial",
+      ],
     },
     customerId: {
       type: Number,

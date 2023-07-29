@@ -37,7 +37,14 @@ const userSchema = mongoose.Schema(
       status: {
         type: String,
         default: null,
-        enum: ["active", "cancelled", "expired", "trial"],
+        enum: [
+          "active",
+          "cancelled",
+          "expired",
+          "past_due",
+          "unpaid",
+          "on_trial",
+        ],
       },
     },
   },

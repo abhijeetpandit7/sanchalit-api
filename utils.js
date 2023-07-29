@@ -113,7 +113,20 @@ const validateSignature = (req, res, next) => {
 
   if (crypto.timingSafeEqual(digest, signature)) {
     req.body = JSON.parse(req.body);
-    return next();
+    if (req.body.meta?.custom_data?.userId)
+      req.userId = req.body.meta.custom_data.userId;
+    else
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient data",
+      });
+    if (req.get("x-event-name") === "subscription_updated") {
+      return next();
+    }
+    return res.status(400).json({
+      success: false,
+      message: "Invalid event",
+    });
   }
   res.status(401).json({
     success: false,

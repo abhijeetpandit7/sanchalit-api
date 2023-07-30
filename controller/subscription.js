@@ -40,6 +40,7 @@ const updateSubscription = async (req, res, next) => {
       endDate: attributes.renews_at ?? targetItem.endDate,
     });
     if (["expired", "unpaid"].includes(subscription.status)) {
+      subscription.renewsAt = null;
       subscription.subscriptionId = null;
     }
     subscription = _.extend(subscription, {

@@ -30,8 +30,7 @@ const userSchema = mongoose.Schema(
         default: null,
       },
       plan: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "SubscriptionPlan",
+        type: String,
         default: null,
       },
       status: {

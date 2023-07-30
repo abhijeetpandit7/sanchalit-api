@@ -14,8 +14,7 @@ const subscriptionSchema = mongoose.Schema({
     default: null,
   },
   plan: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "SubscriptionPlan",
+    type: String,
     required: true,
   },
   discountCode: {

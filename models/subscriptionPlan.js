@@ -6,6 +6,10 @@ const subscriptionPlanSchema = mongoose.Schema(
       type: String,
       required: "Id is required",
     },
+    variantId: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       required: "Name is required",

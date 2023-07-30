@@ -30,7 +30,7 @@ const updateSubscription = async (req, res, next) => {
         _id: +id,
         startDate: attributes.created_at,
         endDate: attributes.renews_at,
-        plan: meta?.custom_data?.planId,
+        plan: meta?.custom_data?.plan,
         orderId: attributes.order_id,
         productId: attributes.product_id,
         productName: attributes.product_name,

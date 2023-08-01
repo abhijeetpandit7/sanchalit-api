@@ -42,6 +42,8 @@ const updateSubscription = async (req, res, next) => {
     if (["expired", "unpaid"].includes(subscription.status)) {
       subscription.renewsAt = null;
       subscription.subscriptionId = null;
+    } else if (subscription.status === "cancelled") {
+      subscription.renewsAt = null;
     }
     subscription = _.extend(subscription, {
       itemList: addOrMergeArrayElements(

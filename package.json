@@ -29,6 +29,7 @@
     "nodemon": "^2.0.19"
   },
   "devDependencies": {
+    "axios": "^1.4.0",
     "buffer": "^6.0.3",
     "crypto": "^1.0.1",
     "jsonwebtoken": "^9.0.0",

@@ -1,3 +1,4 @@
+const axios = require("axios");
 const { Buffer } = require("buffer");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
@@ -7,6 +8,7 @@ const _ = require("lodash");
 dotenv.config();
 
 const secret = process.env.SECRET;
+const URL_LEMONSQUEEZY_API = "https://api.lemonsqueezy.com/v1";
 
 const addOrMergeArrayElements = (array, newElements, identifier) => {
   if (array.length === 0) return newElements;
@@ -75,6 +77,30 @@ const filterObjectBySchema = (obj, schema) => {
   });
 };
 
+const getLemonSqueezyRequestHeaders = () => ({
+  Authorization: `Bearer ${process.env.LEMONSQUEEZY_API_TOKEN}`,
+});
+
+const getLemonSqueezySubscriptionData = async (subscriptionId) => {
+  const url = `${URL_LEMONSQUEEZY_API}/subscriptions/${subscriptionId}?include=product,subscription-invoices`;
+  const response = await axios.get(url, {
+    headers: getLemonSqueezyRequestHeaders(),
+  });
+  if (response.status !== 200) return [];
+
+  const subscriptionObject = response.data.data.attributes;
+  const productObject = response.data.included.find(
+    ({ type }) => type === "products"
+  )?.attributes;
+  const invoices = response.data.included
+    .filter(({ type }) => type === "subscription-invoices")
+    .map(({ attributes }) => attributes)
+    .filter(({ status }) => status === "paid")
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  return [subscriptionObject, productObject, invoices];
+};
+
 const getSignedToken = (user) =>
   jwt.sign(
     { userId: user._id, subscriptionSummary: user.subscriptionSummary },
@@ -140,6 +166,7 @@ module.exports = {
   authenticateUser,
   catchError,
   filterObjectBySchema,
+  getLemonSqueezySubscriptionData,
   getSignedToken,
   isDeepEqual,
   omitDocumentProperties,

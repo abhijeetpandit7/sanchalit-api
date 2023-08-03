@@ -1,7 +1,79 @@
 const _ = require("lodash");
 const { Subscription } = require("../models/subscription");
+const { SubscriptionPlan } = require("../models/subscriptionPlan");
 const { User } = require("../models/user");
-const { addOrMergeArrayElements, catchError } = require("../utils");
+const {
+  addOrMergeArrayElements,
+  catchError,
+  getLemonSqueezySubscriptionData,
+} = require("../utils");
+
+const getSubscription = async (req, res, next) => {
+  catchError(next, async () => {
+    let subscription = await Subscription.findById(req.userId);
+    if (subscription) {
+      const { subscriptionId } = subscription;
+      const currentSubscriptionPlan = await SubscriptionPlan.find({
+        id: subscription.itemList.find(({ _id }) => _id === subscriptionId)
+          ?.plan,
+      }).then((plans) => plans[0]);
+      if (!currentSubscriptionPlan) {
+        return res.status(404).json({
+          success: false,
+          message: "SubscriptionPlan not found",
+        });
+      }
+
+      const [subscriptionObject, productObject, invoices] =
+        await getLemonSqueezySubscriptionData(subscriptionId);
+      if (
+        [subscriptionObject, productObject, invoices].some((item) =>
+          _.isEmpty(item)
+        )
+      ) {
+        return res.status(422).json({
+          success: false,
+          message: "Insufficient data",
+        });
+      }
+
+      const currentSubscription = {
+        ..._.pick(subscription, ["renewsAt", "endsAt", "status"]),
+        amount: invoices[0].total_usd / 100,
+        friendlyAmount: `${invoices[0].total_formatted}/${currentSubscriptionPlan.interval}`,
+        interval: currentSubscriptionPlan.interval,
+      };
+
+      const charges = invoices.map((invoice) => ({
+        amount: invoice.total_usd / 100,
+        card: {
+          brand: invoice.card_brand,
+          last_four: invoice.card_last_four,
+        },
+        date: invoice.created_at,
+        invoice_url: invoice.urls.invoice_url,
+      }));
+
+      const upcomingInvoice =
+        subscription.status === "cancelled" ? null : productObject.price / 100;
+
+      const updatePaymentMethodUrl =
+        subscriptionObject.urls.update_payment_method;
+
+      return res.json({
+        success: true,
+        currentSubscription,
+        charges,
+        upcomingInvoice,
+        updatePaymentMethodUrl,
+      });
+    }
+    return res.status(404).json({
+      success: false,
+      message: "Subscription not found",
+    });
+  });
+};
 
 const updateSubscription = async (req, res, next) => {
   catchError(next, async () => {
@@ -83,5 +155,6 @@ const updateSubscription = async (req, res, next) => {
 };
 
 module.exports = {
+  getSubscription,
   updateSubscription,
 };

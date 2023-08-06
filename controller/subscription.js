@@ -6,6 +6,7 @@ const {
   addOrMergeArrayElements,
   catchError,
   getLemonSqueezySubscriptionData,
+  updateLemonSqueezySubscriptionStatus,
 } = require("../utils");
 
 const getSubscription = async (req, res, next) => {
@@ -42,6 +43,7 @@ const getSubscription = async (req, res, next) => {
         amount: invoices[0].total_usd / 100,
         friendlyAmount: `${invoices[0].total_formatted}/${currentSubscriptionPlan.interval}`,
         interval: currentSubscriptionPlan.interval,
+        id: subscriptionId,
       };
 
       const charges = invoices.map((invoice) => ({
@@ -54,8 +56,7 @@ const getSubscription = async (req, res, next) => {
         invoice_url: invoice.urls.invoice_url,
       }));
 
-      const upcomingInvoice =
-        subscription.status === "cancelled" ? null : productObject.price / 100;
+      const upcomingInvoice = productObject.price / 100;
 
       const updatePaymentMethodUrl =
         subscriptionObject.urls.update_payment_method;
@@ -154,7 +155,34 @@ const updateSubscription = async (req, res, next) => {
   });
 };
 
+const updateSubscriptionAutoRenewalStatus = async (req, res, next) => {
+  catchError(next, async () => {
+    const {
+      data: { subscriptionId, cancelled },
+    } = req.body;
+    if (subscriptionId) {
+      const subscriptionObject = await updateLemonSqueezySubscriptionStatus(
+        subscriptionId,
+        cancelled
+      );
+      if (subscriptionObject) {
+        const currentSubscription = {
+          renewsAt: subscriptionObject.renews_at,
+          endsAt: subscriptionObject.ends_at,
+          status: subscriptionObject.status,
+        };
+        return res.status(200).json({ success: true, currentSubscription });
+      }
+    }
+    return res.status(422).json({
+      success: false,
+      message: "Insufficient data",
+    });
+  });
+};
+
 module.exports = {
   getSubscription,
   updateSubscription,
+  updateSubscriptionAutoRenewalStatus,
 };

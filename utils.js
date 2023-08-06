@@ -132,6 +132,28 @@ const renameObjectKey = (obj, oldKey, newKey) => {
   return obj;
 };
 
+const updateLemonSqueezySubscriptionStatus = async (
+  subscriptionId,
+  cancelled
+) => {
+  const url = `${URL_LEMONSQUEEZY_API}/subscriptions/${subscriptionId}`;
+  const data = {
+    type: "subscriptions",
+    id: subscriptionId.toString(),
+    attributes: {
+      cancelled,
+    },
+  };
+  const response = await axios.patch(
+    url,
+    {
+      data,
+    },
+    { headers: getLemonSqueezyRequestHeaders() }
+  );
+  if (response.status === 200) return response.data.data.attributes;
+};
+
 const validateSignature = (req, res, next) => {
   const hmac = crypto.createHmac("sha256", process.env.LEMONSQUEEZY_SECRET);
   const digest = Buffer.from(hmac.update(req.body).digest("hex"), "utf8");
@@ -171,5 +193,6 @@ module.exports = {
   isDeepEqual,
   omitDocumentProperties,
   renameObjectKey,
+  updateLemonSqueezySubscriptionStatus,
   validateSignature,
 };

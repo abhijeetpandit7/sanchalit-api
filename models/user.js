@@ -43,6 +43,7 @@ const userSchema = mongoose.Schema(
           "past_due",
           "unpaid",
           "on_trial",
+          null
         ],
       },
     },

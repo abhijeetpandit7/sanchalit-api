@@ -61,7 +61,7 @@ const authenticateUser = async (req, res, next) => {
 
 const catchError = async (next, callback) => {
   try {
-    await callback();
+    return await callback();
   } catch (error) {
     next(error);
   }

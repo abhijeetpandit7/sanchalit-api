@@ -9,6 +9,7 @@ const { User } = require("../models/user");
 const { updateCustomization } = require("./customization");
 const { mergeCountdown, updateCountdown } = require("./countdown");
 const { mergeNote, updateNote } = require("./note");
+const { getScheduledQuotes } = require("./quoteCollection");
 const { mergeTodo, updateTodo } = require("./todo");
 const { mergeTodoList, updateTodoList } = require("./todoList");
 const {
@@ -55,6 +56,7 @@ const getUserSettings = async (req, res, next) => {
           Todo.findById(userId),
           TodoList.findById(userId),
         ]);
+        const scheduledQuotes = await getScheduledQuotes(req, res, next, false);
 
         if (countdowns)
           customizationInfo = _.extend(customizationInfo, {
@@ -67,6 +69,10 @@ const getUserSettings = async (req, res, next) => {
             notes: notes
               .toObject()
               .itemList.map((item) => renameObjectKey(item, "_id", "id")),
+          });
+        if (quotes)
+          customizationInfo = _.extend(customizationInfo, {
+            quotes: scheduledQuotes,
           });
         if (todos)
           customizationInfo = _.extend(customizationInfo, {

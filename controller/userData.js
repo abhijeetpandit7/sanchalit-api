@@ -70,7 +70,7 @@ const getUserSettings = async (req, res, next) => {
               .toObject()
               .itemList.map((item) => renameObjectKey(item, "_id", "id")),
           });
-        if (quotes)
+        if (scheduledQuotes)
           customizationInfo = _.extend(customizationInfo, {
             quotes: scheduledQuotes,
           });

@@ -8,6 +8,7 @@ const { catchError } = require("../utils");
 const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
   catchError(next, async () => {
     const { userId } = req;
+    const skipQuote = req.body.data?.skipQuote;
     let quoteCollection = await QuoteCollection.findById(userId);
 
     if (!quoteCollection) {
@@ -25,16 +26,22 @@ const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
         moment(scheduledQuote.forDate).isSameOrAfter(today, "day")
     );
 
-    const hasTodaysQuote = quoteCollection.scheduledList.some(({ forDate }) =>
+    let hasTodaysQuote = quoteCollection.scheduledList.some(({ forDate }) =>
       moment(forDate).isSame(today, "day")
     );
     const hasTomorrowsQuote = quoteCollection.scheduledList.some(
       ({ forDate }) => moment(forDate).isSame(tomorrow, "day")
     );
-    const requiredQuotes = [hasTodaysQuote, hasTomorrowsQuote].filter(
+    let requiredQuotes = [hasTodaysQuote, hasTomorrowsQuote].filter(
       (i) => i === false
     ).length;
-
+    if (skipQuote && requiredQuotes === 0) {
+      quoteCollection.scheduledList = quoteCollection.scheduledList.filter(
+        (scheduledQuote) => moment(scheduledQuote.forDate).isSame(today, "day")
+      );
+      requiredQuotes = 1;
+      hasTodaysQuote = false;
+    }
     if (requiredQuotes > 0) {
       const historyListQuoteIds = quoteCollection.historyList.map(
         (historyItem) => historyItem._id
@@ -107,17 +114,59 @@ const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
         id: item._id._id,
         body: item._id.body,
         source: item._id.source,
+        isFavourite: quoteCollection.favouriteList.includes(item._id._id),
         forDate: item.forDate,
       })
     );
 
     if (sendResponse) {
-      return res.status(200).json({ success: true, quotes: scheduledQuotes });
+      return res
+        .status(requiredQuotes ? 201 : 200)
+        .json({ success: true, quotes: scheduledQuotes });
     } else {
       return scheduledQuotes;
     }
   });
 
+const updateQuote = async (req, res, next) =>
+  catchError(next, async () => {
+    const { userId } = req;
+    const favouriteQuotes = req.body.data.quoteCollection.favourites;
+
+    let quoteCollection = await QuoteCollection.findById(userId);
+
+    if (quoteCollection) {
+      const trueIds = favouriteQuotes
+        .filter((quote) => quote.isFavourite)
+        .map((quote) => quote.id)
+        .filter((id) => quoteCollection.favouriteList.includes(id) === false);
+      const falseIds = favouriteQuotes
+        .filter((quote) => quote.isFavourite === false)
+        .map((quote) => quote.id)
+        .filter((id) => quoteCollection.favouriteList.includes(id));
+
+      if ([...trueIds, ...falseIds].length === 0) {
+        return res.json({
+          success: true,
+          message: "No quote to update",
+        });
+      }
+
+      quoteCollection.favouriteList = [
+        ...quoteCollection.favouriteList,
+        ...trueIds,
+      ].filter((id) => falseIds.includes(id.toString()) === false);
+
+      await quoteCollection.save();
+      return res.json({ success: true });
+    }
+    return res.status(404).json({
+      success: false,
+      message: "QuoteCollection not found",
+    });
+  });
+
 module.exports = {
   getScheduledQuotes,
+  updateQuote,
 };

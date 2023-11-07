@@ -7,8 +7,8 @@ const { catchError } = require("../utils");
 
 const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
   catchError(next, async () => {
-    const { userId } = req;
-    const skipQuote = req.body.data?.skipQuote;
+    const { userId, localDate } = req;
+    const skipQuote = req.body.data?.quoteCollection?.skipQuote;
     let quoteCollection = await QuoteCollection.findById(userId);
 
     if (!quoteCollection) {
@@ -18,7 +18,7 @@ const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
       });
     }
 
-    const today = moment().startOf("day");
+    const today = moment(localDate).utc().startOf("day");
     const tomorrow = today.clone().add(1, "day");
 
     quoteCollection.scheduledList = quoteCollection.scheduledList.filter(
@@ -37,7 +37,8 @@ const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
     ).length;
     if (skipQuote && requiredQuotes === 0) {
       quoteCollection.scheduledList = quoteCollection.scheduledList.filter(
-        (scheduledQuote) => moment(scheduledQuote.forDate).isSame(today, "day")
+        (scheduledQuote) =>
+          moment(scheduledQuote.forDate).isSame(today, "day") === false
       );
       requiredQuotes = 1;
       hasTodaysQuote = false;
@@ -115,7 +116,7 @@ const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
         body: item._id.body,
         source: item._id.source,
         isFavourite: quoteCollection.favouriteList.includes(item._id._id),
-        forDate: item.forDate,
+        forDate: item.forDate.toISOString().split("T")[0],
       })
     );
 
@@ -128,7 +129,7 @@ const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
     }
   });
 
-const updateQuote = async (req, res, next) =>
+const updateQuote = async (req, res, next, sendResponse = true) =>
   catchError(next, async () => {
     const { userId } = req;
     const favouriteQuotes = req.body.data.quoteCollection.favourites;
@@ -146,10 +147,12 @@ const updateQuote = async (req, res, next) =>
         .filter((id) => quoteCollection.favouriteList.includes(id));
 
       if ([...trueIds, ...falseIds].length === 0) {
-        return res.json({
-          success: true,
-          message: "No quote to update",
-        });
+        if (sendResponse) {
+          return res.json({
+            success: true,
+            message: "No quote to update",
+          });
+        } else return;
       }
 
       quoteCollection.favouriteList = [
@@ -158,12 +161,15 @@ const updateQuote = async (req, res, next) =>
       ].filter((id) => falseIds.includes(id.toString()) === false);
 
       await quoteCollection.save();
-      return res.json({ success: true });
+      if (sendResponse) return res.status(201).json({ success: true });
+      else return;
     }
-    return res.status(404).json({
-      success: false,
-      message: "QuoteCollection not found",
-    });
+    if (sendResponse) {
+      return res.status(404).json({
+        success: false,
+        message: "QuoteCollection not found",
+      });
+    }
   });
 
 module.exports = {

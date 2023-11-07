@@ -9,7 +9,7 @@ const { User } = require("../models/user");
 const { updateCustomization } = require("./customization");
 const { mergeCountdown, updateCountdown } = require("./countdown");
 const { mergeNote, updateNote } = require("./note");
-const { getScheduledQuotes } = require("./quoteCollection");
+const { getScheduledQuotes, updateQuote } = require("./quoteCollection");
 const { mergeTodo, updateTodo } = require("./todo");
 const { mergeTodoList, updateTodoList } = require("./todoList");
 const {
@@ -176,8 +176,14 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
 
 const updateUserData = async (req, res, next) => {
   catchError(next, async () => {
-    const { countdowns, notes, todos, todoLists } = req.body.data;
-    let countdownResponse, noteResponse, todoResponse, todoListResponse;
+    const { countdowns, notes, todos, todoLists, quoteCollection } =
+      req.body.data;
+    let countdownResponse,
+      noteResponse,
+      todoResponse,
+      todoListResponse,
+      quoteCollectionResponse,
+      customizationInfo = {};
     const customizationResponse = await updateCustomization(
       req,
       res,
@@ -190,12 +196,32 @@ const updateUserData = async (req, res, next) => {
 
     if (notes?.length) noteResponse = await updateNote(req, res, next, false);
 
+    if (quoteCollection) {
+      if (quoteCollection?.favourites?.length)
+        await updateQuote(req, res, next, false);
+      if (quoteCollection?.skipQuote) {
+        quoteCollectionResponse = await getScheduledQuotes(
+          req,
+          res,
+          next,
+          false
+        );
+        if (quoteCollectionResponse) {
+          customizationInfo = _.extend(customizationInfo, {
+            quotes: quoteCollectionResponse,
+          });
+        }
+      }
+    }
+
     if (todos?.length) todoResponse = await updateTodo(req, res, next, false);
 
     if (todoLists?.length)
       todoListResponse = await updateTodoList(req, res, next, false);
 
-    return res.status(202).json({ success: true });
+    return res
+      .status(202)
+      .json({ success: true, customization: customizationInfo });
   });
 };
 

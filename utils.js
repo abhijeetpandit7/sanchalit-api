@@ -49,6 +49,7 @@ const authenticateUser = async (req, res, next) => {
     const decodedPayload = jwt.verify(token, secret);
     req.userId = decodedPayload.userId;
     req.subscriptionSummary = decodedPayload.subscriptionSummary;
+    req.localDate = req.headers["x-sanchalit-clientdate"];
     return next();
   } catch (error) {
     console.error({ error });

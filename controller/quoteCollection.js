@@ -35,12 +35,12 @@ const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
     let requiredQuotes = [hasTodaysQuote, hasTomorrowsQuote].filter(
       (i) => i === false
     ).length;
-    if (skipQuote && requiredQuotes === 0) {
+    if (skipQuote && hasTodaysQuote) {
       quoteCollection.scheduledList = quoteCollection.scheduledList.filter(
         (scheduledQuote) =>
           moment(scheduledQuote.forDate).isSame(today, "day") === false
       );
-      requiredQuotes = 1;
+      requiredQuotes += 1;
       hasTodaysQuote = false;
     }
     if (requiredQuotes > 0) {

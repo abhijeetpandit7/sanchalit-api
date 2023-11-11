@@ -16,10 +16,13 @@ const addOrPushArrayElements = (array, newElements, identifier) => {
     const existingElement = elementMap.get(String(element[identifier]));
     if (existingElement) {
       existingElement.timestampList = Array.from(
-        new Set([...existingElement.timestampList, ...element.timestampList])
+        new Set([
+          ...existingElement.timestampList.map(String),
+          ...element.timestampList.map(String),
+        ])
       );
     } else {
-      elementMap.set(String(element[identifier]), { ...element });
+      elementMap.set(String(element[identifier]), element);
     }
   });
   return Array.from(elementMap.values());

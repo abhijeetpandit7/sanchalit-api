@@ -60,7 +60,9 @@ const getUserSettings = async (req, res, next) => {
           Todo.findById(userId),
           TodoList.findById(userId),
         ]);
-        const scheduledQuotes = await getScheduledQuotes(req, res, next, false);
+        let scheduledQuotes = [];
+        if (customizationInfo.quotesVisible)
+          scheduledQuotes = await getScheduledQuotes(req, res, next, false);
 
         if (countdowns)
           customizationInfo = _.extend(customizationInfo, {
@@ -74,7 +76,7 @@ const getUserSettings = async (req, res, next) => {
               .toObject()
               .itemList.map((item) => renameObjectKey(item, "_id", "id")),
           });
-        if (scheduledQuotes)
+        if (customizationInfo.quotesVisible && scheduledQuotes)
           customizationInfo = _.extend(customizationInfo, {
             quotes: scheduledQuotes,
           });

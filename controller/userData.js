@@ -9,7 +9,11 @@ const { User } = require("../models/user");
 const { updateCustomization } = require("./customization");
 const { mergeCountdown, updateCountdown } = require("./countdown");
 const { mergeNote, updateNote } = require("./note");
-const { getScheduledQuotes, updateQuote } = require("./quoteCollection");
+const {
+  getScheduledQuotes,
+  mergeQuote,
+  updateQuote,
+} = require("./quoteCollection");
 const { mergeTodo, updateTodo } = require("./todo");
 const { mergeTodoList, updateTodoList } = require("./todoList");
 const {
@@ -128,7 +132,8 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
         let mergeCountdownResponse,
           mergeNoteResponse,
           mergeTodoResponse,
-          mergeTodoListResponse;
+          mergeTodoListResponse,
+          mergeQuoteCollectionResponse;
 
         mergeCountdownResponse = await mergeCountdown(
           next,
@@ -146,6 +151,11 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
           userWithOauth
         );
         mergeTodoListResponse = await mergeTodoList(
+          next,
+          userWithoutOauth,
+          userWithOauth
+        );
+        mergeQuoteCollectionResponse = await mergeQuote(
           next,
           userWithoutOauth,
           userWithOauth

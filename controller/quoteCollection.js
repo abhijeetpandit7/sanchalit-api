@@ -5,6 +5,26 @@ const { Quote } = require("../models/quote");
 const { QuoteCollection } = require("../models/quoteCollection");
 const { catchError } = require("../utils");
 
+const addOrPushArrayElements = (array, newElements, identifier) => {
+  if (array.length === 0) return newElements;
+
+  const elementMap = array.reduce((map, element) => {
+    map.set(String(element[identifier]), element);
+    return map;
+  }, new Map());
+  newElements.forEach((element) => {
+    const existingElement = elementMap.get(String(element[identifier]));
+    if (existingElement) {
+      existingElement.timestampList = Array.from(
+        new Set([...existingElement.timestampList, ...element.timestampList])
+      );
+    } else {
+      elementMap.set(String(element[identifier]), { ...element });
+    }
+  });
+  return Array.from(elementMap.values());
+};
+
 const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
   catchError(next, async () => {
     const { userId, localDate } = req;
@@ -129,6 +149,84 @@ const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
     }
   });
 
+const mergeQuote = async (next, sourceUserId, destinationUserId) => {
+  catchError(next, async () => {
+    let quoteCollectionOfSourceUser = await QuoteCollection.findById(
+      sourceUserId
+    );
+    if (!quoteCollectionOfSourceUser) {
+      return {
+        success: true,
+        message: "No document to merge",
+      };
+    } else if (
+      Object.values(
+        _.pick(quoteCollectionOfSourceUser, [
+          "customList",
+          "favouriteList",
+          "historyList",
+        ])
+      ).every((list) => list.length === 0)
+    ) {
+      await QuoteCollection.findByIdAndDelete(sourceUserId);
+      return {
+        success: true,
+        message: "No list to merge",
+      };
+    }
+
+    let quoteCollectionOfDestinationUser = await QuoteCollection.findById(
+      destinationUserId
+    );
+    if (quoteCollectionOfSourceUser.customList.length) {
+      await Quote.updateMany(
+        { isCustom: true, userId: mongoose.Types.ObjectId(sourceUserId) },
+        { $set: { userId: mongoose.Types.ObjectId(destinationUserId) } }
+      );
+    }
+    if (!quoteCollectionOfDestinationUser) {
+      newUserQuoteCollection = new QuoteCollection({
+        _id: destinationUserId,
+        customList: [...quoteCollectionOfSourceUser.customList],
+        favouriteList: [...quoteCollectionOfSourceUser.favouriteList],
+        historyList: [...quoteCollectionOfSourceUser.historyList],
+        scheduledList: [...quoteCollectionOfSourceUser.scheduledList],
+      });
+      await newUserQuoteCollection.save();
+      await QuoteCollection.findByIdAndDelete(sourceUserId);
+      return {
+        success: true,
+      };
+    }
+
+    quoteCollectionOfDestinationUser = _.extend(
+      quoteCollectionOfDestinationUser,
+      {
+        customList: [
+          ...quoteCollectionOfDestinationUser.customList,
+          ...quoteCollectionOfSourceUser.customList,
+        ],
+        favouriteList: Array.from(
+          new Set([
+            ...quoteCollectionOfDestinationUser.favouriteList.map(String),
+            ...quoteCollectionOfSourceUser.favouriteList.map(String),
+          ])
+        ),
+        historyList: addOrPushArrayElements(
+          quoteCollectionOfDestinationUser.historyList,
+          quoteCollectionOfSourceUser.historyList,
+          "_id"
+        ),
+      }
+    );
+    await quoteCollectionOfDestinationUser.save();
+    await QuoteCollection.findByIdAndDelete(sourceUserId);
+    return {
+      success: true,
+    };
+  });
+};
+
 const updateQuote = async (req, res, next, sendResponse = true) =>
   catchError(next, async () => {
     const { userId } = req;
@@ -174,5 +272,6 @@ const updateQuote = async (req, res, next, sendResponse = true) =>
 
 module.exports = {
   getScheduledQuotes,
+  mergeQuote,
   updateQuote,
 };

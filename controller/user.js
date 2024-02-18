@@ -84,7 +84,7 @@ const getUser = async (req, res, next) => {
 
 const getUserId = async (req, res, next) => {
   catchError(next, async () => {
-    const googleCredential = req.headers.google_credential;
+    const googleCredential = req.headers["google-credential"];
     const decodedPayload = jwt.decode(googleCredential);
     const { sub: oauthId } = decodedPayload;
     const user = await User.findOne({ oauthId });

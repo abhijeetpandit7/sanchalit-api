@@ -11,8 +11,8 @@ const customizationSchema = mongoose.Schema(
       openInNewTab: { type: Boolean },
       includeOtherBookmarks: { type: Boolean },
       includeBookmarksManager: { type: Boolean },
-      includeMostVisited: { type: Boolean },
-      defaultMostVisited: { type: Boolean },
+      // includeMostVisited: { type: Boolean }, // requirePermission
+      // defaultMostVisited: { type: Boolean }, // requirePermission
       appsLocation: {
         type: String,
         trim: true,
@@ -24,7 +24,7 @@ const customizationSchema = mongoose.Schema(
         enum: ["Bookmarks", "Dash", "None"],
       },
     },
-    bookmarksVisible: { type: Boolean },
+    // bookmarksVisible: { type: Boolean }, // requirePermission
     clockVisible: { type: Boolean },
     countdownVisible: { type: Boolean },
     displayName: {

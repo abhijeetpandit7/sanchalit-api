@@ -1,6 +1,6 @@
 const axios = require("axios");
-const { Buffer } = require("buffer");
-const crypto = require("crypto");
+const { Buffer } = require("node:buffer");
+const crypto = require("node:crypto");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const _ = require("lodash");

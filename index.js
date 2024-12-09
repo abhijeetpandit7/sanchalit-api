@@ -40,7 +40,7 @@ app.use("/subscriptionPlan", subscriptionPlanRouter);
 
 app.get("/", (req, res) => {
   res.json({
-    succss: true,
+    success: true,
     message:
       "Refer to the API docs at github.com/abhijeetpandit7/sanchalit-api",
   });

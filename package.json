@@ -29,9 +29,9 @@
     "mongoose": "^6.5.0"
   },
   "devDependencies": {
-    "axios": "^1.4.0",
-    "jsonwebtoken": "^9.0.0",
+    "axios": "^1.7.9",
+    "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
-    "moment": "^2.29.4"
+    "moment": "^2.30.1"
   }
 }

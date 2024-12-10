@@ -137,6 +137,9 @@ const updateLemonSqueezySubscriptionStatus = async (
   subscriptionId,
   cancelled
 ) => {
+  const isInvalidSubscriptionId = /^[0-9]+$/.test(subscriptionId) === false;
+  if (isInvalidSubscriptionId) throw new Error("Invalid subscriptionId");
+
   const url = `${URL_LEMONSQUEEZY_API}/subscriptions/${subscriptionId}`;
   const data = {
     type: "subscriptions",

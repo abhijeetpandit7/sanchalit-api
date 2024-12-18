@@ -73,7 +73,7 @@ const getScheduledQuotes = async (req, res, next, sendResponse = true) =>
 
       const matchCriteria = {
         $or: [
-          { isCustom: true, userId: mongoose.Types.ObjectId(userId) },
+          { isCustom: true, userId: new mongoose.Types.ObjectId(String(userId)) },
           { isCustom: { $exists: false }, userId: { $exists: false } },
         ],
       };
@@ -183,8 +183,8 @@ const mergeQuote = async (next, sourceUserId, destinationUserId) => {
     );
     if (quoteCollectionOfSourceUser.customList.length) {
       await Quote.updateMany(
-        { isCustom: true, userId: mongoose.Types.ObjectId(sourceUserId) },
-        { $set: { userId: mongoose.Types.ObjectId(destinationUserId) } }
+        { isCustom: true, userId: new mongoose.Types.ObjectId(String(sourceUserId)) },
+        { $set: { userId: new mongoose.Types.ObjectId(String(destinationUserId)) } }
       );
     }
     if (!quoteCollectionOfDestinationUser) {

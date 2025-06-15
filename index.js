@@ -1,5 +1,4 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
@@ -10,13 +9,16 @@ const PORT = process.env.PORT || 5000;
 dotenv.config();
 
 const app = express();
-app.use((req, res, next) => {
-  if (req.path.includes("webhook"))
-    express.raw({ type: "application/json" })(req, res, next);
-  else bodyParser.json()(req, res, next);
-});
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      if (req.path.includes("webhook")) req.rawBody = buf;
+    },
+  })
+);
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.disable("x-powered-by");
 
 const userRouter = require("./router/user");
 const userDataRouter = require("./router/userData");

@@ -4,6 +4,6 @@ const { authenticateUser } = require("../utils");
 
 const { deleteTodo } = require("../controller/todo");
 
-router.route("/:id?").delete(authenticateUser, deleteTodo);
+router.route("/{:id}").delete(authenticateUser, deleteTodo);
 
 module.exports = router;

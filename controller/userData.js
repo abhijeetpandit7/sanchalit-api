@@ -54,15 +54,19 @@ const getUserSettings = async (req, res, next) => {
         : customization;
 
       if (customizationInfo) {
-        const [countdowns, notes, todos, todoLists] = await Promise.all([
+        const [
+          { value: countdowns },
+          { value: notes },
+          { value: todos },
+          { value: todoLists },
+          { value: quotes },
+        ] = await Promise.allSettled([
           Countdown.findById(userId),
           Note.findById(userId),
           Todo.findById(userId),
           TodoList.findById(userId),
+          customizationInfo.quotesVisible && getScheduledQuotes(req),
         ]);
-        let scheduledQuotes = [];
-        if (customizationInfo.quotesVisible)
-          scheduledQuotes = await getScheduledQuotes(req, res, next, false);
 
         if (countdowns)
           customizationInfo = _.extend(customizationInfo, {
@@ -76,10 +80,8 @@ const getUserSettings = async (req, res, next) => {
               .toObject()
               .itemList.map((item) => renameObjectKey(item, "_id", "id")),
           });
-        if (customizationInfo.quotesVisible && scheduledQuotes)
-          customizationInfo = _.extend(customizationInfo, {
-            quotes: scheduledQuotes,
-          });
+        if (quotes)
+          customizationInfo = _.extend(customizationInfo, { quotes });
         if (todos)
           customizationInfo = _.extend(customizationInfo, {
             todos: todos
@@ -131,37 +133,21 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
       }
       const userWithOauth = await User.findOne({ oauthId });
       if (userWithOauth) {
-        let mergeCountdownResponse,
-          mergeNoteResponse,
-          mergeTodoResponse,
-          mergeTodoListResponse,
-          mergeQuoteCollectionResponse;
-
-        mergeCountdownResponse = await mergeCountdown(
-          next,
-          userWithoutOauth,
-          userWithOauth
-        );
-        mergeNoteResponse = await mergeNote(
-          next,
-          userWithoutOauth,
-          userWithOauth
-        );
-        mergeTodoResponse = await mergeTodo(
-          next,
-          userWithoutOauth,
-          userWithOauth
-        );
-        mergeTodoListResponse = await mergeTodoList(
-          next,
-          userWithoutOauth,
-          userWithOauth
-        );
-        mergeQuoteCollectionResponse = await mergeQuote(
-          next,
-          userWithoutOauth,
-          userWithOauth
-        );
+        const results = await Promise.allSettled([
+          mergeCountdown(userWithoutOauth, userWithOauth),
+          mergeNote(userWithoutOauth, userWithOauth),
+          mergeTodo(userWithoutOauth, userWithOauth),
+          mergeTodoList(userWithoutOauth, userWithOauth),
+          mergeQuote(userWithoutOauth, userWithOauth),
+        ]);
+        const errors = results
+          .filter((r) => r.status === "rejected")
+          .map((r) => r.reason);
+        if (errors.length) {
+          return next(
+            `Cannot merge user data with Google account: ${errors.join(", ")}`
+          );
+        }
         await Customization.findByIdAndDelete(userWithoutOauth);
         await User.findByIdAndDelete(userWithoutOauth);
 
@@ -190,46 +176,22 @@ const updateUserData = async (req, res, next) => {
   catchError(next, async () => {
     const { countdowns, notes, todos, todoLists, quoteCollection } =
       req.body.data;
-    let countdownResponse,
-      noteResponse,
-      todoResponse,
-      todoListResponse,
-      quoteCollectionResponse,
-      customizationInfo = {};
-    const customizationResponse = await updateCustomization(
-      req,
-      res,
-      next,
-      false
-    );
+    let [{ value: quoteCollectionResponse }] = await Promise.allSettled([
+      quoteCollection?.skipQuote && getScheduledQuotes(req),
+      quoteCollection?.favourites?.length && updateQuote(req),
+      updateCustomization(req),
+      countdowns?.length && updateCountdown(req),
+      notes?.length && updateNote(req),
+      todos?.length && updateTodo(req),
+      todoLists?.length && updateTodoList(req),
+    ]);
 
-    if (countdowns?.length)
-      countdownResponse = await updateCountdown(req, res, next, false);
-
-    if (notes?.length) noteResponse = await updateNote(req, res, next, false);
-
-    if (quoteCollection) {
-      if (quoteCollection?.favourites?.length)
-        await updateQuote(req, res, next, false);
-      if (quoteCollection?.skipQuote) {
-        quoteCollectionResponse = await getScheduledQuotes(
-          req,
-          res,
-          next,
-          false
-        );
-        if (quoteCollectionResponse) {
-          customizationInfo = _.extend(customizationInfo, {
-            quotes: quoteCollectionResponse,
-          });
-        }
-      }
+    let customizationInfo = {};
+    if (quoteCollectionResponse) {
+      customizationInfo = _.extend(customizationInfo, {
+        quotes: quoteCollectionResponse,
+      });
     }
-
-    if (todos?.length) todoResponse = await updateTodo(req, res, next, false);
-
-    if (todoLists?.length)
-      todoListResponse = await updateTodoList(req, res, next, false);
 
     return res
       .status(202)

@@ -22,7 +22,7 @@ app.use(cookieParser());
 // TODO: Remove origin, credentials; this allows cross-site Access-Control requests with credentials
 app.use(
   cors({
-    origin: ["https://sanchalithome.netlify.app", "https://sanchalit.netlify.app"],
+    origin: process.env.ALLOWED_ORIGINS?.split(",") ?? [],
     credentials: true,
   })
 );

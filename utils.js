@@ -44,7 +44,7 @@ const addOrMergeObjectProperties = (object, newProperties) => {
 };
 
 const authenticateUser = async (req, res, next) => {
-  const token = req.headers.authorization;
+  const token = req.cookies.token;
   try {
     const decodedPayload = jwt.verify(token, secret);
     req.userId = decodedPayload.userId;
@@ -52,7 +52,6 @@ const authenticateUser = async (req, res, next) => {
     req.localDate = req.headers["x-sanchalit-clientdate"];
     return next();
   } catch (error) {
-    console.error({ error });
     return res.status(401).json({
       success: false,
       message: "Authentication error",
@@ -77,6 +76,18 @@ const filterObjectBySchema = (obj, schema) => {
     return value;
   });
 };
+
+const getDateFromToday = (numberOfDays) => {
+  const date = new Date();
+  date.setDate(date.getDate() + numberOfDays);
+  return date;
+};
+
+const getCookieOptions = () => ({
+  httpOnly: true,
+  expires: getDateFromToday(7),
+  secure: true,
+});
 
 const getLemonSqueezyRequestHeaders = () => ({
   Authorization: `Bearer ${process.env.LEMONSQUEEZY_API_TOKEN}`,
@@ -191,9 +202,9 @@ module.exports = {
   authenticateUser,
   catchError,
   filterObjectBySchema,
+  getCookieOptions,
   getLemonSqueezySubscriptionData,
   getSignedToken,
-  isDeepEqual,
   omitDocumentProperties,
   renameObjectKey,
   updateLemonSqueezySubscriptionStatus,

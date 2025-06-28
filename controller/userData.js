@@ -18,8 +18,8 @@ const { mergeTodo, updateTodo } = require("./todo");
 const { mergeTodoList, updateTodoList } = require("./todoList");
 const {
   catchError,
+  getCookieOptions,
   getSignedToken,
-  isDeepEqual,
   omitDocumentProperties,
   renameObjectKey,
 } = require("../utils");
@@ -38,15 +38,8 @@ const getUserSettings = async (req, res, next) => {
           _.pick(user, ["fullName", "profilePictureUrl"])
         );
 
-      const isTokenLegacy =
-        isDeepEqual(
-          JSON.parse(JSON.stringify(req.subscriptionSummary)),
-          JSON.parse(JSON.stringify(user.subscriptionSummary))
-        ) === false;
-      if (isTokenLegacy) {
-        const token = getSignedToken(user);
-        userInfo = _.extend(userInfo, { token });
-      }
+      const token = getSignedToken(user);
+      res.cookie("token", token, getCookieOptions());
 
       const customization = await Customization.findById(userId);
       let customizationInfo = !!customization
@@ -108,6 +101,7 @@ const getUserSettings = async (req, res, next) => {
         message: "Customization not found",
       });
     }
+    res.clearCookie("token");
     return res.status(404).json({
       success: false,
       message: "User not found",
@@ -154,7 +148,8 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
         const token = getSignedToken(userWithOauth);
         let userInfo = _.pick(userWithOauth, ["_id"]);
         renameObjectKey(userInfo, "_id", "userId");
-        userInfo = _.extend(userInfo, { token });
+
+        res.cookie("token", token, getCookieOptions());
         return res.status(202).json({
           success: true,
           auth: userInfo,
@@ -165,6 +160,8 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
         message: "User not found",
       });
     }
+
+    res.clearCookie("token");
     return res.status(404).json({
       success: false,
       message: "User not found",

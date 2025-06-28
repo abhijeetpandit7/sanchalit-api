@@ -91,10 +91,6 @@ const updateTodoList = async (req) => {
     ? data.map((item) => renameObjectKey(item, "id", "_id"))
     : [renameObjectKey(data, "id", "_id")];
 
-  if (req.body.data?.todoSettings) {
-    await updateCustomization(req);
-  }
-
   let todoList = await TodoList.findById(userId);
 
   if (!todoList) {

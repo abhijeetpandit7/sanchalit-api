@@ -87,6 +87,7 @@ const getCookieOptions = () => ({
   httpOnly: true,
   expires: getDateFromToday(7),
   secure: true,
+  sameSite: "None", // TODO: Remove to disable cross-site usage
 });
 
 const getLemonSqueezyRequestHeaders = () => ({

@@ -52,7 +52,7 @@ const connectGoogle = async (req, res, next) => {
         auth: userInfo,
       });
     }
-    res.clearCookie("token");
+    res.clearCookie("token", getCookieOptions());
     return res.status(404).json({
       success: false,
       message: "User not found",
@@ -73,7 +73,7 @@ const getUser = async (req, res, next) => {
         auth: userInfo,
       });
     }
-    res.clearCookie("token");
+    res.clearCookie("token", getCookieOptions());
     return res.status(404).json({
       success: false,
       message: "User not found",
@@ -125,7 +125,7 @@ const logInUserWithGoogle = async (req, res, next) => {
 
 const logOutUser = async (req, res, next) => {
   catchError(next, async () => {
-    res.clearCookie("token");
+    res.clearCookie("token", getCookieOptions());
     return res.json({ success: true });
   });
 };

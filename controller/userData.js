@@ -73,8 +73,7 @@ const getUserSettings = async (req, res, next) => {
               .toObject()
               .itemList.map((item) => renameObjectKey(item, "_id", "id")),
           });
-        if (quotes)
-          customizationInfo = _.extend(customizationInfo, { quotes });
+        if (quotes) customizationInfo = _.extend(customizationInfo, { quotes });
         if (todos)
           customizationInfo = _.extend(customizationInfo, {
             todos: todos
@@ -101,7 +100,7 @@ const getUserSettings = async (req, res, next) => {
         message: "Customization not found",
       });
     }
-    res.clearCookie("token");
+    res.clearCookie("token", getCookieOptions());
     return res.status(404).json({
       success: false,
       message: "User not found",
@@ -161,7 +160,7 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
       });
     }
 
-    res.clearCookie("token");
+    res.clearCookie("token", getCookieOptions());
     return res.status(404).json({
       success: false,
       message: "User not found",

@@ -7,6 +7,7 @@ const {
   getUser,
   getUserId,
   logInUserWithGoogle,
+  logOutUser,
   signUpUser,
   signUpUserWithGoogle,
 } = require("../controller/user");
@@ -18,6 +19,8 @@ router.route("/connect/google").post(authenticateUser, connectGoogle);
 router.route("/id").get(getUserId);
 
 router.route("/login").post(logInUserWithGoogle);
+
+router.route("/logout").post(authenticateUser, logOutUser);
 
 router.route("/register").post(signUpUser);
 

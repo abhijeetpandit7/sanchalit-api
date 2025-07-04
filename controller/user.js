@@ -4,10 +4,18 @@ const { Customization } = require("../models/customization");
 const { User } = require("../models/user");
 const {
   catchError,
+  getCookieOptions,
   getSignedToken,
-  isDeepEqual,
   renameObjectKey,
 } = require("../utils");
+
+const USER_ATTRIBUTES = [
+  "_id",
+  "email",
+  "fullName",
+  "profilePictureUrl",
+  "subscriptionSummary",
+];
 
 const connectGoogle = async (req, res, next) => {
   catchError(next, async () => {
@@ -31,10 +39,10 @@ const connectGoogle = async (req, res, next) => {
         profilePictureUrl,
       });
       await user.save();
-      let userInfo = _.pick(user, ["_id"]);
+      let userInfo = _.pick(user, USER_ATTRIBUTES);
       renameObjectKey(userInfo, "_id", "userId");
       const token = getSignedToken(user);
-      userInfo = _.extend(userInfo, { token });
+      res.cookie("token", token, getCookieOptions());
       const customization = await Customization.findById(req.userId);
       if (customization && !!customization.displayName === false)
         customization.displayName = displayName;
@@ -44,6 +52,7 @@ const connectGoogle = async (req, res, next) => {
         auth: userInfo,
       });
     }
+    res.clearCookie("token", getCookieOptions());
     return res.status(404).json({
       success: false,
       message: "User not found",
@@ -55,26 +64,16 @@ const getUser = async (req, res, next) => {
   catchError(next, async () => {
     const user = await User.findById(req.userId);
     if (user) {
-      let userInfo = _.pick(user, [
-        "_id",
-        "email",
-        "fullName",
-        "profilePictureUrl",
-        "subscriptionSummary",
-      ]);
+      let userInfo = _.pick(user, USER_ATTRIBUTES);
       renameObjectKey(userInfo, "_id", "userId");
-      const isTokenLegacy =
-        isDeepEqual(req.subscriptionSummary, user.subscriptionSummary) ===
-        false;
-      if (isTokenLegacy) {
-        const token = getSignedToken(user);
-        userInfo = _.extend(userInfo, { token });
-      }
+      const token = getSignedToken(user);
+      res.cookie("token", token, getCookieOptions());
       return res.json({
         success: true,
         auth: userInfo,
       });
     }
+    res.clearCookie("token", getCookieOptions());
     return res.status(404).json({
       success: false,
       message: "User not found",
@@ -109,9 +108,9 @@ const logInUserWithGoogle = async (req, res, next) => {
     const user = await User.findOne({ oauthId });
     if (user) {
       const token = getSignedToken(user);
-      let userInfo = _.pick(user, ["_id"]);
+      let userInfo = _.pick(user, USER_ATTRIBUTES);
       renameObjectKey(userInfo, "_id", "userId");
-      userInfo = _.extend(userInfo, { token });
+      res.cookie("token", token, getCookieOptions());
       return res.json({
         success: true,
         auth: userInfo,
@@ -124,6 +123,13 @@ const logInUserWithGoogle = async (req, res, next) => {
   });
 };
 
+const logOutUser = async (req, res, next) => {
+  catchError(next, async () => {
+    res.clearCookie("token", getCookieOptions());
+    return res.json({ success: true });
+  });
+};
+
 const signUpUser = async (req, res, next) => {
   catchError(next, async () => {
     let user = new User();
@@ -131,7 +137,7 @@ const signUpUser = async (req, res, next) => {
     const token = getSignedToken(user);
     let userInfo = _.pick(user, ["_id", "subscriptionSummary"]);
     renameObjectKey(userInfo, "_id", "userId");
-    userInfo = _.extend(userInfo, { token });
+    res.cookie("token", token, getCookieOptions());
     return res.status(201).json({
       success: true,
       auth: userInfo,
@@ -158,9 +164,9 @@ const signUpUserWithGoogle = async (req, res, next) => {
     });
     await user.save();
     const token = getSignedToken(user);
-    let userInfo = _.pick(user, ["_id"]);
+    let userInfo = _.pick(user, USER_ATTRIBUTES);
     renameObjectKey(userInfo, "_id", "userId");
-    userInfo = _.extend(userInfo, { token });
+    res.cookie("token", token, getCookieOptions());
     return res.status(201).json({
       success: true,
       auth: userInfo,
@@ -173,6 +179,7 @@ module.exports = {
   getUser,
   getUserId,
   logInUserWithGoogle,
+  logOutUser,
   signUpUser,
   signUpUserWithGoogle,
 };

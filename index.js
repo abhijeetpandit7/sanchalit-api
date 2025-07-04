@@ -1,4 +1,5 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
@@ -17,7 +18,14 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cookieParser());
+// TODO: Remove origin, credentials; this allows cross-site Access-Control requests with credentials
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(",") ?? [],
+    credentials: true,
+  })
+);
 app.disable("x-powered-by");
 
 const userRouter = require("./router/user");
@@ -49,11 +57,13 @@ app.get("/", (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.log(err.stack);
-  res.status(500).json({
-    success: false,
-    message: err.message,
-  });
+  console.error(`Something wrong in ${req.method} ${req.path}:`, err);
+  if (!res.headersSent) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 });
 
 app.use((req, res) => {

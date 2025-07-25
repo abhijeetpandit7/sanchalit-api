@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/abhijeetpandit7/sanchalit-api#readme",
   "dependencies": {
-    "axios": "^1.10.0",
+    "axios": "^1.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",

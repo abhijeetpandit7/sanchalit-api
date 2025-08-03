@@ -6,6 +6,7 @@ const { Note } = require("../models/note");
 const { Todo } = require("../models/todo");
 const { TodoList } = require("../models/todoList");
 const { User } = require("../models/user");
+const { getScheduledBackgrounds } = require("./backgroundCollection");
 const { updateCustomization } = require("./customization");
 const { mergeCountdown, updateCountdown } = require("./countdown");
 const { mergeNote, updateNote } = require("./note");
@@ -52,15 +53,18 @@ const getUserSettings = async (req, res, next) => {
           { value: notes },
           { value: todos },
           { value: todoLists },
+          { value: backgrounds },
           { value: quotes },
         ] = await Promise.allSettled([
           Countdown.findById(userId),
           Note.findById(userId),
           Todo.findById(userId),
           TodoList.findById(userId),
+          getScheduledBackgrounds(req, customizationInfo.backgroundsFrequency),
           customizationInfo.quotesVisible && getScheduledQuotes(req),
         ]);
 
+        if (backgrounds) customizationInfo = _.extend(customizationInfo, { backgrounds });
         if (countdowns)
           customizationInfo = _.extend(customizationInfo, {
             countdowns: countdowns

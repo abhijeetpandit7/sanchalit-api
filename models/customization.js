@@ -6,11 +6,6 @@ const customizationSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    backgroundsFrequency: {
-      type: String,
-      enum: ["tab", "hour", "day", "pause"],
-      default: "day",
-    },
     bookmarksSettings: {
       iconsOnly: { type: Boolean },
       openInNewTab: { type: Boolean },

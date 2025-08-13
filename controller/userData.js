@@ -60,11 +60,12 @@ const getUserSettings = async (req, res, next) => {
           Note.findById(userId),
           Todo.findById(userId),
           TodoList.findById(userId),
-          getScheduledBackgrounds(req, customizationInfo.backgroundsFrequency),
+          getScheduledBackgrounds(req),
           customizationInfo.quotesVisible && getScheduledQuotes(req),
         ]);
 
-        if (backgrounds) customizationInfo = _.extend(customizationInfo, { backgrounds });
+        if (backgrounds)
+          customizationInfo = _.extend(customizationInfo, { backgrounds });
         if (countdowns)
           customizationInfo = _.extend(customizationInfo, {
             countdowns: countdowns

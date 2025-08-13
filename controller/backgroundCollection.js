@@ -4,31 +4,36 @@ const moment = require("moment/moment");
 const { BackgroundCollection } = require("../models/backgroundCollection");
 const { Background } = require("../models/background");
 
-const getScheduledBackgrounds = async (req) => {
-  const { userId, localDate } = req;
+const DESIRED_QUEUE_LENGTH = 2;
+
+const getScheduledBackgrounds = async (userId, localDate) => {
   let backgroundCollection = await BackgroundCollection.findById(userId);
 
-  let requiredPhotos = 0;
+  let shouldRotate = false;
   const now = moment(localDate).utc();
 
-  if (!backgroundCollection || backgroundCollection.queue.length < 2) {
+  if (!backgroundCollection) {
     backgroundCollection = new BackgroundCollection({ _id: userId, queue: [] });
-    requiredPhotos = 2;
   } else if (backgroundCollection.frequency === "tab") {
-    requiredPhotos = 1;
+    shouldRotate = true;
   } else if (backgroundCollection.frequency === "hour") {
     const hourAgo = now.clone().subtract(1, "hour");
     if (moment(backgroundCollection.updatedDate).isBefore(hourAgo))
-      requiredPhotos = 1;
+      shouldRotate = true;
   } else if (backgroundCollection.frequency === "day") {
     const startOfToday = now.clone().startOf("day");
     if (moment(backgroundCollection.updatedDate).isBefore(startOfToday))
-      requiredPhotos = 1;
+      shouldRotate = true;
   }
 
-  if (requiredPhotos) {
+  if (shouldRotate) {
     backgroundCollection.queue.shift();
-
+  }
+  const requiredPhotos = Math.max(
+    0,
+    DESIRED_QUEUE_LENGTH - backgroundCollection.queue.length
+  );
+  if (requiredPhotos) {
     const backgrounds = await Background.aggregate([
       { $sample: { size: requiredPhotos } },
     ]);
@@ -38,28 +43,25 @@ const getScheduledBackgrounds = async (req) => {
       });
     });
     backgroundCollection.updatedDate = now.toDate();
-
     await backgroundCollection.save();
   }
 
-  const populatedBackgroundCollection = await BackgroundCollection.findById(
-    userId
-  )
-    .populate("queue._id")
-    .select("queue")
-    .exec();
-
-  const scheduledBackgrounds = populatedBackgroundCollection.queue.map(
-    (item) => ({
-      id: item._id._id,
-      title: item._id.title,
-      source: item._id.source,
-      sourceUrl: item._id.sourceUrl,
-      widgetColor: item._id.widgetColor,
-      filename: item._id.filename,
+  await backgroundCollection.populate("queue._id");
+  const queue = backgroundCollection.queue.map(
+    ({ _id: { title, source, sourceUrl, widgetColor, filename } }) => ({
+      title,
+      source,
+      sourceUrl,
+      widgetColor,
+      filename,
     })
   );
-  return scheduledBackgrounds;
+
+  return {
+    queue,
+    frequency: backgroundCollection.frequency,
+    updatedDate: backgroundCollection.updatedDate,
+  };
 };
 
 module.exports = {

@@ -27,7 +27,7 @@ const {
 
 const getUserSettings = async (req, res, next) => {
   catchError(next, async () => {
-    const { userId } = req;
+    const { userId, localDate } = req;
     const isProfileDetailsRequested = req.query.profileDetails === "1";
     const user = await User.findById(userId);
     if (user) {
@@ -49,18 +49,18 @@ const getUserSettings = async (req, res, next) => {
 
       if (customizationInfo) {
         const [
+          { value: backgrounds },
           { value: countdowns },
           { value: notes },
           { value: todos },
           { value: todoLists },
-          { value: backgrounds },
           { value: quotes },
         ] = await Promise.allSettled([
+          getScheduledBackgrounds(userId, localDate),
           Countdown.findById(userId),
           Note.findById(userId),
           Todo.findById(userId),
           TodoList.findById(userId),
-          getScheduledBackgrounds(req),
           customizationInfo.quotesVisible && getScheduledQuotes(req),
         ]);
 

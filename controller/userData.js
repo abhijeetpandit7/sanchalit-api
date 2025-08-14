@@ -6,6 +6,7 @@ const { Note } = require("../models/note");
 const { Todo } = require("../models/todo");
 const { TodoList } = require("../models/todoList");
 const { User } = require("../models/user");
+const { getScheduledBackgrounds } = require("./backgroundCollection");
 const { updateCustomization } = require("./customization");
 const { mergeCountdown, updateCountdown } = require("./countdown");
 const { mergeNote, updateNote } = require("./note");
@@ -26,7 +27,7 @@ const {
 
 const getUserSettings = async (req, res, next) => {
   catchError(next, async () => {
-    const { userId } = req;
+    const { userId, localDate } = req;
     const isProfileDetailsRequested = req.query.profileDetails === "1";
     const user = await User.findById(userId);
     if (user) {
@@ -48,12 +49,14 @@ const getUserSettings = async (req, res, next) => {
 
       if (customizationInfo) {
         const [
+          { value: backgrounds },
           { value: countdowns },
           { value: notes },
           { value: todos },
           { value: todoLists },
           { value: quotes },
         ] = await Promise.allSettled([
+          getScheduledBackgrounds(userId, localDate),
           Countdown.findById(userId),
           Note.findById(userId),
           Todo.findById(userId),
@@ -61,6 +64,8 @@ const getUserSettings = async (req, res, next) => {
           customizationInfo.quotesVisible && getScheduledQuotes(req),
         ]);
 
+        if (backgrounds)
+          customizationInfo = _.extend(customizationInfo, { backgrounds });
         if (countdowns)
           customizationInfo = _.extend(customizationInfo, {
             countdowns: countdowns

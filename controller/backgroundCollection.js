@@ -1,5 +1,5 @@
-const _ = require("lodash");
 const moment = require("moment/moment");
+const _ = require("lodash");
 
 const { BackgroundCollection } = require("../models/backgroundCollection");
 const { Background } = require("../models/background");
@@ -47,8 +47,9 @@ const getScheduledBackgrounds = async (userId, localDate) => {
   }
 
   await backgroundCollection.populate("queue._id");
-  const queue = backgroundCollection.queue.map(
-    ({ _id: { title, source, sourceUrl, widgetColor, filename } }) => ({
+  const backgrounds = backgroundCollection.queue.map(
+    ({ _id: { _id, title, source, sourceUrl, widgetColor, filename } }) => ({
+      id: _id,
       title,
       source,
       sourceUrl,
@@ -58,9 +59,11 @@ const getScheduledBackgrounds = async (userId, localDate) => {
   );
 
   return {
-    queue,
-    frequency: backgroundCollection.frequency,
-    updatedDate: backgroundCollection.updatedDate,
+    backgrounds,
+    backgroundsSettings: _.pick(backgroundCollection, [
+      "frequency",
+      "updatedDate",
+    ]),
   };
 };
 

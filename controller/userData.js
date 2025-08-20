@@ -49,7 +49,9 @@ const getUserSettings = async (req, res, next) => {
 
       if (customizationInfo) {
         const [
-          { value: backgrounds },
+          {
+            value: { backgrounds, backgroundsSettings },
+          },
           { value: countdowns },
           { value: notes },
           { value: todos },
@@ -65,7 +67,10 @@ const getUserSettings = async (req, res, next) => {
         ]);
 
         if (backgrounds)
-          customizationInfo = _.extend(customizationInfo, { backgrounds });
+          customizationInfo = _.extend(customizationInfo, {
+            backgrounds,
+            backgroundsSettings,
+          });
         if (countdowns)
           customizationInfo = _.extend(customizationInfo, {
             countdowns: countdowns

@@ -36,6 +36,7 @@ const todoRouter = require("./router/todo");
 const todoListRouter = require("./router/todoList");
 const subscriptionRouter = require("./router/subscription");
 const subscriptionPlanRouter = require("./router/subscriptionPlan");
+const { getScheduledBackgrounds } = require("./controller/backgroundCollection");
 
 db.connectDB();
 
@@ -47,6 +48,12 @@ app.use("/todo", todoRouter);
 app.use("/todoList", todoListRouter);
 app.use("/subscription", subscriptionRouter);
 app.use("/subscriptionPlan", subscriptionPlanRouter);
+// add endpoint to test getScheduledBackgrounds
+app.get("/test/scheduledBackgrounds", async (req, res) => {
+  const { userId, localDate } = req.query;
+  const result = await getScheduledBackgrounds(userId, localDate);
+  res.json(result);
+});
 
 app.get("/", (req, res) => {
   res.json({

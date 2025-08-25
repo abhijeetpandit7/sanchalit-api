@@ -6,7 +6,10 @@ const { Note } = require("../models/note");
 const { Todo } = require("../models/todo");
 const { TodoList } = require("../models/todoList");
 const { User } = require("../models/user");
-const { getScheduledBackgrounds } = require("./backgroundCollection");
+const {
+  getScheduledBackgrounds,
+  updateBackgroundsSettings,
+} = require("./backgroundCollection");
 const { updateCustomization } = require("./customization");
 const { mergeCountdown, updateCountdown } = require("./countdown");
 const { mergeNote, updateNote } = require("./note");
@@ -189,13 +192,15 @@ const updateUserData = async (req, res, next) => {
       todoLists,
     } = req.body.data;
     const { userId, localDate } = req;
+    const { skipBackground, backgroundsSettings } = backgroundCollection ?? {};
     let [
       { value: backgroundCollectionResponse },
       { value: quoteCollectionResponse },
     ] = await Promise.allSettled([
-      backgroundCollection?.skipBackground &&
-        getScheduledBackgrounds(userId, localDate, true),
+      skipBackground && getScheduledBackgrounds(userId, localDate, true),
       quoteCollection?.skipQuote && getScheduledQuotes(req),
+      backgroundsSettings &&
+        updateBackgroundsSettings(userId, backgroundsSettings),
       quoteCollection?.favourites?.length && updateQuote(req),
       updateCustomization(req),
       countdowns?.length && updateCountdown(req),

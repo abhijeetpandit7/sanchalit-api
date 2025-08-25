@@ -3,6 +3,7 @@ const _ = require("lodash");
 
 const { BackgroundCollection } = require("../models/backgroundCollection");
 const { Background } = require("../models/background");
+const { filterObjectBySchema } = require("../utils");
 
 const DESIRED_QUEUE_LENGTH = 2;
 
@@ -71,6 +72,28 @@ const getScheduledBackgrounds = async (
   };
 };
 
+const updateBackgroundsSettings = async (userId, data) => {
+  const collectionData = filterObjectBySchema(
+    data,
+    BackgroundCollection.schema.obj
+  );
+  if (_.isEmpty(collectionData)) {
+    return { success: true };
+  }
+
+  const backgroundCollection = await BackgroundCollection.findById(userId);
+  if (backgroundCollection) {
+    _.extend(backgroundCollection, collectionData);
+    await backgroundCollection.save();
+    return { success: true };
+  }
+  return {
+    success: false,
+    message: "BackgroundCollection not found",
+  };
+};
+
 module.exports = {
   getScheduledBackgrounds,
+  updateBackgroundsSettings,
 };

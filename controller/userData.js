@@ -180,9 +180,21 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
 
 const updateUserData = async (req, res, next) => {
   catchError(next, async () => {
-    const { countdowns, notes, todos, todoLists, quoteCollection } =
-      req.body.data;
-    let [{ value: quoteCollectionResponse }] = await Promise.allSettled([
+    const {
+      backgroundCollection,
+      countdowns,
+      notes,
+      quoteCollection,
+      todos,
+      todoLists,
+    } = req.body.data;
+    const { userId, localDate } = req;
+    let [
+      { value: backgroundCollectionResponse },
+      { value: quoteCollectionResponse },
+    ] = await Promise.allSettled([
+      backgroundCollection?.skipBackground &&
+        getScheduledBackgrounds(userId, localDate, true),
       quoteCollection?.skipQuote && getScheduledQuotes(req),
       quoteCollection?.favourites?.length && updateQuote(req),
       updateCustomization(req),
@@ -193,6 +205,13 @@ const updateUserData = async (req, res, next) => {
     ]);
 
     let customizationInfo = {};
+    if (backgroundCollectionResponse) {
+      const { backgrounds, backgroundsSettings } = backgroundCollectionResponse;
+      customizationInfo = _.extend(customizationInfo, {
+        backgrounds,
+        backgroundsSettings,
+      });
+    }
     if (quoteCollectionResponse) {
       customizationInfo = _.extend(customizationInfo, {
         quotes: quoteCollectionResponse,

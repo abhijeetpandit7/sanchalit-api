@@ -6,7 +6,11 @@ const { Background } = require("../models/background");
 
 const DESIRED_QUEUE_LENGTH = 2;
 
-const getScheduledBackgrounds = async (userId, localDate) => {
+const getScheduledBackgrounds = async (
+  userId,
+  localDate,
+  skipBackground = false
+) => {
   let backgroundCollection = await BackgroundCollection.findById(userId);
 
   let shouldRotate = false;
@@ -14,7 +18,7 @@ const getScheduledBackgrounds = async (userId, localDate) => {
 
   if (!backgroundCollection) {
     backgroundCollection = new BackgroundCollection({ _id: userId, queue: [] });
-  } else if (backgroundCollection.frequency === "tab") {
+  } else if (skipBackground || backgroundCollection.frequency === "tab") {
     shouldRotate = true;
   } else if (backgroundCollection.frequency === "hour") {
     const hourAgo = now.clone().subtract(1, "hour");

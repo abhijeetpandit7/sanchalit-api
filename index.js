@@ -30,6 +30,7 @@ app.disable("x-powered-by");
 
 const userRouter = require("./router/user");
 const userDataRouter = require("./router/userData");
+const backgroundsRouter = require("./router/backgrounds");
 const countdownRouter = require("./router/countdown");
 const noteRouter = require("./router/note");
 const todoRouter = require("./router/todo");
@@ -41,6 +42,7 @@ db.connectDB();
 
 app.use("/user", userRouter);
 app.use("/userData", userDataRouter);
+app.use("/backgrounds", backgroundsRouter);
 app.use("/countdown", countdownRouter);
 app.use("/note", noteRouter);
 app.use("/todo", todoRouter);

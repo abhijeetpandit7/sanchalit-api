@@ -3,9 +3,35 @@ const _ = require("lodash");
 
 const { BackgroundCollection } = require("../models/backgroundCollection");
 const { Background } = require("../models/background");
-const { filterObjectBySchema } = require("../utils");
+const { catchError, filterObjectBySchema } = require("../utils");
 
 const DESIRED_QUEUE_LENGTH = 2;
+
+const getFavouriteBackgrounds = async (req, res, next) => {
+  catchError(next, async () => {
+    const { userId } = req;
+    let backgroundCollection = await BackgroundCollection.findById(
+      userId
+    ).populate("favouriteList");
+
+    if (backgroundCollection) {
+      return res.json({
+        success: true,
+        favouriteList: backgroundCollection.favouriteList.map(
+          ({ _id, title, filename }) => ({
+            id: _id,
+            title,
+            filename,
+          })
+        ),
+      });
+    }
+    return res.status(404).json({
+      success: false,
+      message: "BackgroundCollection not found",
+    });
+  });
+};
 
 const getScheduledBackgrounds = async (
   userId,
@@ -43,23 +69,22 @@ const getScheduledBackgrounds = async (
       { $sample: { size: requiredPhotos } },
     ]);
     backgrounds.forEach((background) => {
-      backgroundCollection.queue.push({
-        _id: background._id,
-      });
+      backgroundCollection.queue.push(background._id);
     });
     backgroundCollection.updatedDate = now.toDate();
     await backgroundCollection.save();
   }
 
-  await backgroundCollection.populate("queue._id");
+  await backgroundCollection.populate("queue");
   const backgrounds = backgroundCollection.queue.map(
-    ({ _id: { _id, title, source, sourceUrl, widgetColor, filename } }) => ({
+    ({ _id, title, source, sourceUrl, widgetColor, filename }) => ({
       id: _id,
       title,
       source,
       sourceUrl,
       widgetColor,
       filename,
+      isFavourite: backgroundCollection.favouriteList.includes(_id),
     })
   );
 
@@ -94,6 +119,7 @@ const updateBackgroundsSettings = async (userId, data) => {
 };
 
 module.exports = {
+  getFavouriteBackgrounds,
   getScheduledBackgrounds,
   updateBackgroundsSettings,
 };

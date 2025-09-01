@@ -30,30 +30,25 @@ app.disable("x-powered-by");
 
 const userRouter = require("./router/user");
 const userDataRouter = require("./router/userData");
+const backgroundsRouter = require("./router/backgrounds");
 const countdownRouter = require("./router/countdown");
 const noteRouter = require("./router/note");
 const todoRouter = require("./router/todo");
 const todoListRouter = require("./router/todoList");
 const subscriptionRouter = require("./router/subscription");
 const subscriptionPlanRouter = require("./router/subscriptionPlan");
-const { getScheduledBackgrounds } = require("./controller/backgroundCollection");
 
 db.connectDB();
 
 app.use("/user", userRouter);
 app.use("/userData", userDataRouter);
+app.use("/backgrounds", backgroundsRouter);
 app.use("/countdown", countdownRouter);
 app.use("/note", noteRouter);
 app.use("/todo", todoRouter);
 app.use("/todoList", todoListRouter);
 app.use("/subscription", subscriptionRouter);
 app.use("/subscriptionPlan", subscriptionPlanRouter);
-// add endpoint to test getScheduledBackgrounds
-app.get("/test/scheduledBackgrounds", async (req, res) => {
-  const { userId, localDate } = req.query;
-  const result = await getScheduledBackgrounds(userId, localDate);
-  res.json(result);
-});
 
 app.get("/", (req, res) => {
   res.json({

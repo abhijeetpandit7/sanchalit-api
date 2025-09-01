@@ -97,6 +97,42 @@ const getScheduledBackgrounds = async (
   };
 };
 
+const updateBackground = async (userId, favouriteBackgrounds) => {
+  let backgroundCollection = await BackgroundCollection.findById(userId);
+
+  if (backgroundCollection) {
+    const trueIds = favouriteBackgrounds
+      .filter((background) => background.isFavourite)
+      .map((background) => background.id)
+      .filter(
+        (id) => backgroundCollection.favouriteList.includes(id) === false
+      );
+    const falseIds = favouriteBackgrounds
+      .filter((background) => background.isFavourite === false)
+      .map((background) => background.id)
+      .filter((id) => backgroundCollection.favouriteList.includes(id));
+
+    if ([...trueIds, ...falseIds].length === 0) {
+      return {
+        success: true,
+        message: "No background to update",
+      };
+    }
+
+    backgroundCollection.favouriteList = [
+      ...trueIds,
+      ...backgroundCollection.favouriteList,
+    ].filter((id) => falseIds.includes(id.toString()) === false);
+
+    await backgroundCollection.save();
+    return { success: true };
+  }
+  return {
+    success: false,
+    message: "BackgroundCollection not found",
+  };
+};
+
 const updateBackgroundsSettings = async (userId, data) => {
   const collectionData = filterObjectBySchema(
     data,
@@ -121,5 +157,6 @@ const updateBackgroundsSettings = async (userId, data) => {
 module.exports = {
   getFavouriteBackgrounds,
   getScheduledBackgrounds,
+  updateBackground,
   updateBackgroundsSettings,
 };

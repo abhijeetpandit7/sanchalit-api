@@ -8,6 +8,7 @@ const { TodoList } = require("../models/todoList");
 const { User } = require("../models/user");
 const {
   getScheduledBackgrounds,
+  updateBackground,
   updateBackgroundsSettings,
 } = require("./backgroundCollection");
 const { updateCustomization } = require("./customization");
@@ -202,6 +203,8 @@ const updateUserData = async (req, res, next) => {
       backgroundsSettings &&
         updateBackgroundsSettings(userId, backgroundsSettings),
       quoteCollection?.favourites?.length && updateQuote(req),
+      backgroundCollection?.favourites?.length &&
+        updateBackground(userId, backgroundCollection?.favourites),
       updateCustomization(req),
       countdowns?.length && updateCountdown(req),
       notes?.length && updateNote(req),

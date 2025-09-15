@@ -20,7 +20,7 @@ router.route("/id").get(getUserId);
 
 router.route("/login").post(logInUserWithGoogle);
 
-router.route("/logout").post(authenticateUser, logOutUser);
+router.route("/logout").post(logOutUser);
 
 router.route("/register").post(signUpUser);
 

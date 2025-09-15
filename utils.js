@@ -44,14 +44,8 @@ const addOrMergeObjectProperties = (object, newProperties) => {
 };
 
 const authenticateUser = async (req, res, next) => {
-  const token = req.cookies.token;
-  if (!!token === false) {
-    return res.status(403).json({
-      success: false,
-      message: "Authentication required",
-    });
-  }
   try {
+    const token = req.cookies.token;
     const decodedPayload = jwt.verify(token, secret);
     req.userId = decodedPayload.userId;
     req.subscriptionSummary = decodedPayload.subscriptionSummary;

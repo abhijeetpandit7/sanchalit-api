@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
+const { BackgroundCollection } = require("../models/backgroundCollection");
 const { Countdown } = require("../models/countdown");
 const { Customization } = require("../models/customization");
 const { Note } = require("../models/note");
@@ -155,6 +156,7 @@ const mergeUserDataWithGoogle = async (req, res, next) => {
             `Cannot merge user data with Google account: ${errors.join(", ")}`
           );
         }
+        await BackgroundCollection.findByIdAndDelete(userWithoutOauth);
         await Customization.findByIdAndDelete(userWithoutOauth);
         await User.findByIdAndDelete(userWithoutOauth);
 
